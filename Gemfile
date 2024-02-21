@@ -6,3 +6,4 @@ gem "rackup"
 gem "puma"
 gem "zache"
 gem "http"
+gem "activesupport", '~> 7.0.8'
