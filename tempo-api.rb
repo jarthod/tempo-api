@@ -28,6 +28,7 @@ get "/" do
   end_of_today = (now.hour < HP_START ? now.change(hour: HP_START) : now.tomorrow.change(hour: HP_START))
   end_of_tomorrow = end_of_today.advance(days: 1)
   no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
+  puts "HP: #{hp}, Today: #{today} (→ #{end_of_today}), Tomorrow: #{tomorrow} (→ #{end_of_tomorrow})"
   actions = [
     updateLEDs(today, tomorrow, timing: "initial", fx: (hp ? "none" : "breathingSlow")),
     { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).iso8601 },
@@ -40,5 +41,5 @@ get "/" do
     actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, fx: "none")
     actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: HP_END), fx: "breathingSlow")
   end
-  { time: now.iso8601, actions: actions }.to_json
+  { time: now.iso8601, actions: actions }.to_json.tap { puts _1 }
 end
