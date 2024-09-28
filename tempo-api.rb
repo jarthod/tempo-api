@@ -20,6 +20,10 @@ def updateLEDs today, tomorrow, timing:, fx: "none"
   { action: "updateLEDs", timing: timing, LEDs: [{RGB: COLORS[today], FX: fx}]*3 + [{RGB: COLORS[tomorrow], FX: "none"}]}
 end
 
+def time_format time
+  time.strftime("%Y-%m-%dT%H:%M:%S") # ISO8601 without TZ
+end
+
 get "/" do
   now = Time.now.in_time_zone('Europe/Paris')
   today = params[:today]&.to_i || $cache.get(:today, lifetime: 600) { HTTP.get("https://www.api-couleur-tempo.fr/api/jourTempo/today").parse['codeJour'] }
@@ -31,15 +35,15 @@ get "/" do
   puts "HP: #{hp}, Today: #{today} (→ #{end_of_today}), Tomorrow: #{tomorrow} (→ #{end_of_tomorrow})"
   actions = [
     updateLEDs(today, tomorrow, timing: "initial", fx: (hp ? "none" : "breathingSlow")),
-    { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).iso8601 },
-    { action: "error_noData", timing: no_data.iso8601 }
+    { action: "syncAPI", timing: time_format(now + SYNC_INTERVAL * 3600 + rand(3600)) },
+    { action: "error_noData", timing: time_format(no_data) }
   ]
   if hp
-    actions << updateLEDs(today, tomorrow, timing: now.change(hour: HP_END), fx: "breathingSlow")
+    actions << updateLEDs(today, tomorrow, timing: time_format(now.change(hour: HP_END)), fx: "breathingSlow")
   end
   if tomorrow != UNKNOWN
-    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, fx: "none")
-    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: HP_END), fx: "breathingSlow")
+    actions << updateLEDs(tomorrow, UNKNOWN, timing: time_format(end_of_today), fx: "none")
+    actions << updateLEDs(tomorrow, UNKNOWN, timing: time_format(end_of_today.change(hour: HP_END)), fx: "breathingSlow")
   end
-  { time: now.iso8601, actions: actions }.to_json.tap { puts _1 }
+  { time: time_format(now), actions: actions }.to_json.tap { puts _1 }
 end
