@@ -6,6 +6,7 @@ require 'sinatra'
 require 'zache'
 require 'http'
 require 'active_support/core_ext/time'
+require 'active_support/core_ext/integer'
 
 $cache = Zache.new
 
@@ -20,13 +21,20 @@ def updateLEDs today, tomorrow, timing:, fx: "none"
   { action: "updateLEDs", timing: timing, LEDs: [{RGB: COLORS[today], FX: fx}]*3 + [{RGB: COLORS[tomorrow], FX: "none"}]}
 end
 
+def color_for time
+  tempo_day = (time - HP_START.hours).to_date
+  $cache.get(tempo_day, lifetime: 600) do
+    HTTP.get("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").parse.fetch('codeJour', UNKNOWN)
+  end
+end
+
 get "/" do
   now = Time.now.in_time_zone('Europe/Paris')
-  today = params[:today]&.to_i || $cache.get(:today, lifetime: 600) { HTTP.get("https://www.api-couleur-tempo.fr/api/jourTempo/today").parse['codeJour'] }
-  tomorrow = params[:tomorrow]&.to_i || $cache.get(:tomorrow, lifetime: 600) { HTTP.get("https://www.api-couleur-tempo.fr/api/jourTempo/tomorrow").parse['codeJour'] }
+  today = params[:today]&.to_i || color_for(now)
+  tomorrow = params[:tomorrow]&.to_i || color_for(now.tomorrow)
   hp = now.hour.between?(HP_START, HP_END-1)
   end_of_today = (now.hour < HP_START ? now.change(hour: HP_START) : now.tomorrow.change(hour: HP_START))
-  end_of_tomorrow = end_of_today.advance(days: 1)
+  end_of_tomorrow = end_of_today + 1.day
   no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
   puts "[#{now}] HP: #{hp}, Today: #{today} (→ #{end_of_today}), Tomorrow: #{tomorrow} (→ #{end_of_tomorrow})"
   actions = [
