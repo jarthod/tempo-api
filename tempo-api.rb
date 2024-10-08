@@ -18,7 +18,7 @@ HP_END = 22
 SYNC_INTERVAL = 1 # hours
 
 def updateLEDs today, tomorrow, timing:, fx: "none"
-  { action: "updateLEDs", timing: timing, LEDs: [{RGB: COLORS[today], FX: fx}]*3 + [{RGB: COLORS[tomorrow], FX: "none"}]}
+  { action: "updateLEDs", timing: timing, LEDs: [{RGB: COLORS[today], FX: fx}]*4 + [{RGB: COLORS[tomorrow], FX: "none"}]*4}
 end
 
 def color_for time
@@ -38,16 +38,16 @@ get "/" do
   no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
   puts "[#{now}] HP: #{hp}, Today: #{today} (→ #{end_of_today}), Tomorrow: #{tomorrow} (→ #{end_of_tomorrow})"
   actions = [
-    updateLEDs(today, tomorrow, timing: "initial", fx: (hp ? "none" : "breathingSlow")),
+    updateLEDs(today, tomorrow, timing: "initial", fx: (hp ? "none" : "breathingRingHalf")),
     { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).utc.iso8601 },
     { action: "error_noData", timing: no_data.utc.iso8601 }
   ]
   if hp
-    actions << updateLEDs(today, tomorrow, timing: now.change(hour: HP_END).utc.iso8601, fx: "breathingSlow")
+    actions << updateLEDs(today, tomorrow, timing: now.change(hour: HP_END).utc.iso8601, fx: "breathingRingHalf")
   end
   if tomorrow != UNKNOWN
     actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.utc.iso8601, fx: "none")
-    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: HP_END).utc.iso8601, fx: "breathingSlow")
+    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: HP_END).utc.iso8601, fx: "breathingRingHalf")
   end
   { time: now.utc.iso8601, actions: actions }.to_json.tap { puts _1 }
 end
