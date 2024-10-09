@@ -18,7 +18,7 @@ HP_END = 22
 SYNC_INTERVAL = 1 # hours
 
 def updateLEDs today, tomorrow, timing:, fx: "none"
-  { action: "updateLEDs", timing: timing, LEDs: [{RGB: COLORS[today], FX: fx}]*4 + [{RGB: COLORS[tomorrow], FX: "none"}]*4}
+  { action: "updateLEDs", timing: timing, topLEDs: {RGB: COLORS[today], FX: fx}, bottomLEDs: {RGB: COLORS[tomorrow], FX: "none"}}
 end
 
 def color_for time
