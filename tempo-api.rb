@@ -11,7 +11,7 @@ require 'active_support/core_ext/integer'
 $cache = Zache.new
 
 # https://www.api-couleur-tempo.fr/api/docs?ui=re_doc#tag/JourTempo [inconnu, bleu, blanc, rouge]
-COLORS = [[0, 0, 0], [0, 0, 255], [255, 255, 255], [255, 0, 0]]
+COLORS = [[0, 0, 0], [0, 90, 220], [255, 255, 255], [220, 30, 0]]
 UNKNOWN = 0
 HP_START = 6
 HP_END = 22
@@ -38,16 +38,16 @@ get "/" do
   no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
   puts "[#{now}] HP: #{hp}, Today: #{today} (→ #{end_of_today}), Tomorrow: #{tomorrow} (→ #{end_of_tomorrow})"
   actions = [
-    updateLEDs(today, tomorrow, timing: "initial", fx: (hp ? "none" : "breathingRingHalf")),
+    updateLEDs(today, tomorrow, timing: "initial", fx: (hp & today == 3 ? "breathingRingHalf" : "none")),
     { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).utc.iso8601 },
     { action: "error_noData", timing: no_data.utc.iso8601 }
   ]
   if hp
-    actions << updateLEDs(today, tomorrow, timing: now.change(hour: HP_END).utc.iso8601, fx: "breathingRingHalf")
+    actions << updateLEDs(today, tomorrow, timing: now.change(hour: HP_END).utc.iso8601, fx: "none")
   end
   if tomorrow != UNKNOWN
-    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.utc.iso8601, fx: "none")
-    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: HP_END).utc.iso8601, fx: "breathingRingHalf")
+    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.utc.iso8601, fx: (tomorrow == 3 ? "breathingRingHalf" : "none"))
+    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: HP_END).utc.iso8601, fx: "none")
   end
   { time: now.utc.iso8601, actions: actions }.to_json.tap { puts _1 }
 end
