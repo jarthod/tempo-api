@@ -11,7 +11,7 @@ require 'active_support/core_ext/integer'
 $cache = Zache.new
 
 # https://www.api-couleur-tempo.fr/api/docs?ui=re_doc#tag/JourTempo [inconnu, bleu, blanc, rouge]
-COLORS = [[0, 0, 0], [10, 90, 220], [255, 255, 255], [220, 30, 0]]
+COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 40, 0]]
 UNKNOWN = 0
 HP_START = 6
 HP_END = 22
