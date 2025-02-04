@@ -7,6 +7,7 @@ require 'zache'
 require 'http'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/integer'
+require 'sinatra/activerecord'
 
 $cache = Zache.new
 
@@ -16,6 +17,23 @@ UNKNOWN = 0
 HP_START = 6
 HP_END = 22
 SYNC_INTERVAL = 1 # hours
+
+set :database, {adapter: "sqlite3", database: "data/db.sqlite3"}
+
+# Define a simple model
+class Device < ActiveRecord::Base
+end
+
+# Create the users table if it doesn't exist
+# unless ActiveRecord::Base.connection.table_exists?(:devices)
+#   ActiveRecord::Schema.define do
+#     create_table :devices do |t|
+#       t.string :name
+#       t.string :name
+#       t.timestamps
+#     end
+#   end
+# end
 
 def updateLEDs today, tomorrow, timing:, fx: "none", brightness: 1
   { action: "updateLEDs", timing: timing, topLEDs: {RGB: COLORS[today].map { (_1 * brightness).to_i }, FX: fx}, bottomLEDs: {RGB: COLORS[tomorrow].map { (_1 * brightness).to_i }, FX: "none"}}
@@ -29,6 +47,9 @@ def color_for time
 end
 
 get "/" do
+  headers_list = request.env.select { |k, v| k.start_with?('HTTP_') }.map { |k, v| "- #{k}: #{v}" }.join("\n")
+  puts "Request headers:\n#{headers_list}"
+
   now = Time.now.in_time_zone('Europe/Paris')
   today = params[:today]&.to_i || color_for(now)
   tomorrow = params[:tomorrow]&.to_i || color_for(now.tomorrow)
