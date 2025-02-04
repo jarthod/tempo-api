@@ -49,6 +49,7 @@ end
 get "/" do
   headers_list = request.env.select { |k, v| k.start_with?('HTTP_') }.map { |k, v| "- #{k}: #{v}" }.join("\n")
   puts "Request headers:\n#{headers_list}"
+  puts "Request params:\n#{params}"
 
   now = Time.now.in_time_zone('Europe/Paris')
   today = params[:today]&.to_i || color_for(now)
