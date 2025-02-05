@@ -12,7 +12,7 @@ require 'sinatra/activerecord'
 $cache = Zache.new
 
 # https://www.api-couleur-tempo.fr/api/docs?ui=re_doc#tag/JourTempo [inconnu, bleu, blanc, rouge] (+vert pour EJP)
-COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 0, 0], [80, 200, 35]]
+COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 0, 0], [30, 200, 0]]
 COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert)
 UNKNOWN = 0
 TEMPO_HP_START = 6
