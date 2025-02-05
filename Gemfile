@@ -5,7 +5,7 @@ gem "sinatra"
 gem "rackup"
 gem "puma"
 gem "zache"
-gem "http"
+gem "httpx"
 gem "activesupport", '~> 7.0.8'
 
 gem "sinatra-activerecord"

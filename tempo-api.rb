@@ -4,7 +4,7 @@
 
 require 'sinatra'
 require 'zache'
-require 'http'
+require 'httpx'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/integer'
 require 'sinatra/activerecord'
@@ -45,26 +45,27 @@ def tempo_color_for time
   tempo_day = (time - TEMPO_HP_START.hours).to_date
   $cache.get("api-couleur-tempo/#{tempo_day}", lifetime: 600) do
     # Alternative: https://www.services-rte.com/cms/open_data/v1/tempoLight
-    HTTP.get("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").parse.fetch('codeJour', UNKNOWN)
+    HTTPX.with(timeout: { connection_timeout: 5, request_timeout: 10 })
+      .get("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").json.fetch('codeJour', UNKNOWN)
   end
 end
 
 def ejp_color_for time
   ejp_day = time.to_date
   $cache.get("EJP/#{ejp_day}", lifetime: 600) do
-    puts "Request EJP for #{ejp_day}"
-    json = HTTP.headers("Accept": "application/json", "application-origine-controlee" => "site_RC", "situation-usage" => "Jours Effacement")
+    puts "> Request EJP for #{ejp_day} (no cache)"
+    response = HTTPX.with(timeout: { connection_timeout: 5, request_timeout: 10 },
+      headers: {"Accept": "application/json", "application-origine-controlee" => "site_RC", "situation-usage" => "Jours Effacement"})
       .get("https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement", params: {
         dateApplicationBorneInf: ejp_day.strftime("%Y-%-m-%-d"),
         dateApplicationBorneSup: ejp_day.strftime("%Y-%-m-%-d"),
         option: 'EJP', identifiantConsommateur: "src"
       })
-    puts json
-    statut = json.parse.dig('content', 'options', 0, 'calendrier', 0, 'statut')
-    puts statut
+    puts "> " + response
+    statut = response.json.dig('content', 'options', 0, 'calendrier', 0, 'statut')
     code = (statut == "EJP" ? 3 : 4) # 3 = rouge, 4 = vert
     code = 0 if ejp_day > Date.today && time.hour < 15 && statut == 'NON_EJP' # inconnu
-    puts code
+    puts "> #{statut} → #{code}"
     code
   end
 end
@@ -182,11 +183,12 @@ __END__
 
 @@ admin
 <table>
-  <tr><th>Device ID</th><th>Mode</th><th>Last Poll / Update</th></tr>
+  <tr><th>Device ID</th><th>Mode</th><th>First Poll</th><th>Last Poll / Update</th></tr>
   <% Device.all.each do |device| %>
     <tr>
-      <td><%= device.id %></td>
+      <td><%= device.id.to_s(16).upcase %></td>
       <td><strong><%= device.mode.upcase %></strong> <a href="/devices/<%= device.id %>/change_mode">⇄</a></td>
+      <td><%= device.created_at.in_time_zone('Europe/Paris') %></td>
       <td><%= device.updated_at.in_time_zone('Europe/Paris') %></td>
     </tr>
   <% end %>
