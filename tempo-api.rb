@@ -11,12 +11,15 @@ require 'sinatra/activerecord'
 
 $cache = Zache.new
 
-# https://www.api-couleur-tempo.fr/api/docs?ui=re_doc#tag/JourTempo [inconnu, bleu, blanc, rouge]
-COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 0, 0]]
-COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge)
+# https://www.api-couleur-tempo.fr/api/docs?ui=re_doc#tag/JourTempo [inconnu, bleu, blanc, rouge] (+vert pour EJP)
+COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 0, 0], [80, 200, 35]]
+COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert)
 UNKNOWN = 0
-HP_START = 6
-HP_END = 22
+TEMPO_HP_START = 6
+TEMPO_HP_END = 22
+# 7h - 25h en France, mais j'utilise une timezone Londre pour simplifier
+EJP_HP_START = 6
+EJP_HP_END = 24
 SYNC_INTERVAL = 1 # hours
 
 set :database, {adapter: "sqlite3", database: "data/db.sqlite3"}
@@ -39,9 +42,30 @@ def updateLEDs today, tomorrow, timing:, fx: "none", brightness: 1
 end
 
 def tempo_color_for time
-  tempo_day = (time - HP_START.hours).to_date
-  $cache.get(tempo_day, lifetime: 600) do
+  tempo_day = (time - TEMPO_HP_START.hours).to_date
+  $cache.get("api-couleur-tempo/#{tempo_day}", lifetime: 600) do
+    # Alternative: https://www.services-rte.com/cms/open_data/v1/tempoLight
     HTTP.get("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").parse.fetch('codeJour', UNKNOWN)
+  end
+end
+
+def ejp_color_for time
+  ejp_day = time.to_date
+  $cache.get("EJP/#{ejp_day}", lifetime: 600) do
+    puts "Request EJP for #{ejp_day}"
+    json = HTTP.headers("Accept": "application/json", "application-origine-controlee" => "site_RC", "situation-usage" => "Jours Effacement")
+      .get("https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement", params: {
+        dateApplicationBorneInf: ejp_day.strftime("%Y-%-m-%-d"),
+        dateApplicationBorneSup: ejp_day.strftime("%Y-%-m-%-d"),
+        option: 'EJP', identifiantConsommateur: "src"
+      })
+    puts json
+    statut = json.parse.dig('content', 'options', 0, 'calendrier', 0, 'statut')
+    puts statut
+    code = (statut == "EJP" ? 3 : 4) # 3 = rouge, 4 = vert
+    code = 0 if ejp_day > Date.today && time.hour < 15 && statut == 'NON_EJP' # inconnu
+    puts code
+    code
   end
 end
 
@@ -55,7 +79,9 @@ end
 
 helpers do
   def color_display index
-    "<span style='color: rgb(#{COLORS[index].join(', ')});'>● #{COLOR_NAMES[index]}</span>"
+    color = COLORS[index]
+    color = [100, 100, 100] if index == 0 # black would not be readable on black
+    "<span style='color: rgb(#{color.join(', ')});'>● #{COLOR_NAMES[index]}</span>"
   end
 end
 
@@ -66,34 +92,69 @@ get "/" do
   device = Device.find_or_create_by(id: device_id.to_i) if device_id.to_i > 0
   puts "[#{now}] Device #{device.id} (mode: #{device.mode}, created: #{device.created_at}, last_update: #{device.updated_at})" if device
   device&.touch
-  today = params[:today]&.to_i || tempo_color_for(now)
-  tomorrow = params[:tomorrow]&.to_i || tempo_color_for(now.tomorrow)
-  hp = now.hour.between?(HP_START, HP_END-1)
-  end_of_today = (now.hour < HP_START ? now.change(hour: HP_START) : now.tomorrow.change(hour: HP_START))
-  end_of_tomorrow = end_of_today + 1.day
-  no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
-  puts "[#{now}] Tempo HP: #{hp}, Today: #{today} (→ #{end_of_today}), Tomorrow: #{tomorrow} (→ #{end_of_tomorrow})"
-  actions = [
-    updateLEDs(today, tomorrow, timing: "initial", fx: (hp && today == 3 ? "breathingRingHalf" : "none"), brightness: (hp ? 1 : 0.5)),
-    { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).utc.iso8601 },
-    { action: "error_noData", timing: no_data.utc.iso8601 }
-  ]
-  if hp
-    actions << updateLEDs(today, tomorrow, timing: now.change(hour: HP_END).utc.iso8601, brightness: 0.5)
+  case params[:mode] || device&.mode
+  when 'ejp'
+    # Timezone 1h en avance sur la France, pour simplifier la gestion de la fin à 1h (ca passe a minuit)
+    now = now.in_time_zone('Europe/London')
+    today = params[:today]&.to_i || ejp_color_for(now)
+    tomorrow = params[:tomorrow]&.to_i || ejp_color_for(now.tomorrow)
+    hp = now.hour.between?(EJP_HP_START, EJP_HP_END-1)
+    end_of_today = now.change(hour: EJP_HP_END)
+    end_of_tomorrow = end_of_today + 1.day
+    no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
+    puts "[#{now}] EJP HP: #{hp}, Today: #{COLOR_NAMES[today]} (→ #{end_of_today}), Tomorrow: #{COLOR_NAMES[tomorrow]} (→ #{end_of_tomorrow})"
+    actions = [
+      updateLEDs(today, tomorrow, timing: "initial", fx: (hp && today == 3 ? "breathingRingHalf" : "none"), brightness: (hp ? 1 : 0.5)),
+      { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).utc.iso8601 },
+      { action: "error_noData", timing: no_data.utc.iso8601 }
+    ]
+    if !hp
+      actions << updateLEDs(today, tomorrow, timing: now.change(hour: EJP_HP_START).utc.iso8601, fx: (today == 3 ? "breathingRingHalf" : "none"))
+    end
+    if tomorrow != UNKNOWN
+      actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.utc.iso8601, brightness: 0.5)
+      actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: EJP_HP_START).utc.iso8601, fx: (tomorrow == 3 ? "breathingRingHalf" : "none"))
+    end
+  else
+    today = params[:today]&.to_i || tempo_color_for(now)
+    tomorrow = params[:tomorrow]&.to_i || tempo_color_for(now.tomorrow)
+    hp = now.hour.between?(TEMPO_HP_START, TEMPO_HP_END-1)
+    end_of_today = (now.hour < TEMPO_HP_START ? now.change(hour: TEMPO_HP_START) : now.tomorrow.change(hour: TEMPO_HP_START))
+    end_of_tomorrow = end_of_today + 1.day
+    no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
+    puts "[#{now}] Tempo HP: #{hp}, Today: #{COLOR_NAMES[today]} (→ #{end_of_today}), Tomorrow: #{COLOR_NAMES[tomorrow]} (→ #{end_of_tomorrow})"
+    actions = [
+      updateLEDs(today, tomorrow, timing: "initial", fx: (hp && today == 3 ? "breathingRingHalf" : "none"), brightness: (hp ? 1 : 0.5)),
+      { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).utc.iso8601 },
+      { action: "error_noData", timing: no_data.utc.iso8601 }
+    ]
+    if hp
+      actions << updateLEDs(today, tomorrow, timing: now.change(hour: TEMPO_HP_END).utc.iso8601, brightness: 0.5)
+    end
+    if tomorrow != UNKNOWN
+      actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.utc.iso8601, fx: (tomorrow == 3 ? "breathingRingHalf" : "none"))
+      actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: TEMPO_HP_END).utc.iso8601, brightness: 0.5)
+    end
   end
-  if tomorrow != UNKNOWN
-    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.utc.iso8601, fx: (tomorrow == 3 ? "breathingRingHalf" : "none"))
-    actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: HP_END).utc.iso8601, brightness: 0.5)
-  end
+  content_type :json
   { time: now.utc.iso8601, actions: actions }.to_json.tap { puts "[#{now}] Response: #{_1}" }
 end
 
 get '/admin' do
   protected!
   @now = Time.now.in_time_zone('Europe/Paris')
-  @today = tempo_color_for(@now)
-  @tomorrow = tempo_color_for(@now.tomorrow)
   erb :admin, layout: :main
+end
+
+get '/devices/:id/change_mode' do
+  protected!
+  device = Device.find_or_create_by(id: params[:id])
+  if device.mode == 'tempo'
+    device.update(mode: 'ejp')
+  else
+    device.update(mode: 'tempo')
+  end
+  redirect '/admin'
 end
 
 # Views
@@ -109,19 +170,24 @@ __END__
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@exampledev/new.css@1.1.2/new.min.css">
 </head>
 <body>
-  <header><h1>TempOrb Admin</h1></header>
+  <header><h1><%= $icon ||= File.read('icon.svg') %> TempOrb Admin</h1></header>
   <main><%= yield %></main>
   <footer style="color: #888">
     <div style="float: right"><%= @now %></div>
-    TEMPO: <%= color_display(@today) %> / <%= color_display(@tomorrow) %>
+    TEMPO: <%= color_display(tempo_color_for(@now)) %> / <%= color_display(tempo_color_for(@now.tomorrow)) %><br>
+    EJP: <%= color_display(ejp_color_for(@now)) %> / <%= color_display(ejp_color_for(@now.tomorrow)) %>
   </footer>
 </body>
 </html>
 
 @@ admin
 <table>
-  <tr><th>Device ID</th><th>Mode</th><th>Last Poll</th></tr>
+  <tr><th>Device ID</th><th>Mode</th><th>Last Poll / Update</th></tr>
   <% Device.all.each do |device| %>
-    <tr><td><%= device.id %></td><td><%= device.mode %></td><td><%= device.updated_at.in_time_zone('Europe/Paris') %></td></tr>
+    <tr>
+      <td><%= device.id %></td>
+      <td><strong><%= device.mode.upcase %></strong> <a href="/devices/<%= device.id %>/change_mode">⇄</a></td>
+      <td><%= device.updated_at.in_time_zone('Europe/Paris') %></td>
+    </tr>
   <% end %>
 </table>
