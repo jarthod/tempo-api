@@ -61,12 +61,21 @@ def ejp_color_for time
         dateApplicationBorneSup: ejp_day.strftime("%Y-%-m-%-d"),
         option: 'EJP', identifiantConsommateur: "src"
       })
-    puts "> " + response
-    statut = response.json.dig('content', 'options', 0, 'calendrier', 0, 'statut')
-    code = (statut == "EJP" ? 3 : 4) # 3 = rouge, 4 = vert
-    code = 0 if ejp_day > Date.today && time.hour < 15 && statut == 'NON_EJP' # inconnu
-    puts "> #{statut} → #{code}"
-    code
+    case response
+    in [200, [*, %w[content-type application/json], *], *]
+      puts "> #{response.status} #{response.body}"
+      statut = response.json.dig('content', 'options', 0, 'calendrier', 0, 'statut')
+      code = (statut == "EJP" ? 3 : 4) # 3 = rouge, 4 = vert
+      code = 0 if ejp_day > Date.today && time.hour < 15 && statut == 'NON_EJP' # inconnu
+      puts "> #{statut} → #{code}"
+      code
+    in {status: 100..}
+      puts "> Error #{response.status} #{response.body}"
+      UNKNOWN
+    in {error: error}
+      puts "> #{error.class}: #{error}"
+      UNKNOWN
+    end
   end
 end
 
