@@ -1,0 +1,11 @@
+<table>
+  <tr><th>Device ID</th><th>Mode</th><th>First Poll</th><th>Last Poll / Update</th></tr>
+  <% Device.all.each do |device| %>
+    <tr>
+      <td><%= device.id.to_s(16).upcase %></td>
+      <td><strong><%= device.mode.upcase %></strong> <a href="/devices/<%= device.id %>/change_mode">⇄</a></td>
+      <td><%= device.created_at.in_time_zone('Europe/Paris') %></td>
+      <td><%= device.updated_at.in_time_zone('Europe/Paris') %></td>
+    </tr>
+  <% end %>
+</table>

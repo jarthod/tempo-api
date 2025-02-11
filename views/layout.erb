@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TempOrb Admin</title>
+  <link rel="stylesheet" href="https://fonts.xz.style/serve/inter.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@exampledev/new.css@1.1.2/new.min.css">
+</head>
+<body>
+  <header><h1><%= $icon ||= File.read('public/icon.svg') %> TempOrb Admin</h1></header>
+  <main><%= yield %></main>
+  <footer style="color: #888">
+    <div style="float: right"><%= @now %></div>
+    TEMPO: <%= color_display(EDF.tempo_color_for(@now)) %> / <%= color_display(EDF.tempo_color_for(@now.tomorrow)) %><br>
+    EJP: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %>
+  </footer>
+</body>
+</html>

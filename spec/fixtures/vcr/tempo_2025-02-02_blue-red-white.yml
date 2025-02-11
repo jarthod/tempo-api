@@ -1,0 +1,141 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://www.api-couleur-tempo.fr/api/jourTempo/2025-02-02
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - www.api-couleur-tempo.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Mon, 10 Feb 2025 22:58:31 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - deny
+      Cache-Control:
+      - no-cache, private
+      Access-Control-Allow-Origin:
+      - "*"
+      Link:
+      - <https://www.api-couleur-tempo.fr/api/docs.jsonld>; rel="http://www.w3.org/ns/hydra/core#apiDocumentation"
+      Etag:
+      - '"555f8ecff393a6e3c8708b75256068e6"'
+      Server:
+      - o2switch-PowerBoost-v3
+    body:
+      encoding: UTF-8
+      string: '{"dateJour":"2025-02-02","codeJour":1,"periode":"2024-2025"}'
+  recorded_at: Mon, 10 Feb 2025 22:58:32 GMT
+- request:
+    method: get
+    uri: https://www.api-couleur-tempo.fr/api/jourTempo/2025-02-03
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - www.api-couleur-tempo.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Mon, 10 Feb 2025 22:58:31 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - deny
+      Cache-Control:
+      - no-cache, private
+      Access-Control-Allow-Origin:
+      - "*"
+      Link:
+      - <https://www.api-couleur-tempo.fr/api/docs.jsonld>; rel="http://www.w3.org/ns/hydra/core#apiDocumentation"
+      Etag:
+      - '"b3a9b629102767783311b2257d4b1593"'
+      Server:
+      - o2switch-PowerBoost-v3
+    body:
+      encoding: UTF-8
+      string: '{"dateJour":"2025-02-03","codeJour":3,"periode":"2024-2025"}'
+  recorded_at: Mon, 10 Feb 2025 22:58:32 GMT
+- request:
+    method: get
+    uri: https://www.api-couleur-tempo.fr/api/jourTempo/2025-02-04
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - www.api-couleur-tempo.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Mon, 10 Feb 2025 22:58:32 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - deny
+      Cache-Control:
+      - no-cache, private
+      Access-Control-Allow-Origin:
+      - "*"
+      Link:
+      - <https://www.api-couleur-tempo.fr/api/docs.jsonld>; rel="http://www.w3.org/ns/hydra/core#apiDocumentation"
+      Etag:
+      - '"89084c8ac96b660408d2ae4b6c63862e"'
+      Server:
+      - o2switch-PowerBoost-v3
+    body:
+      encoding: UTF-8
+      string: '{"dateJour":"2025-02-04","codeJour":2,"periode":"2024-2025"}'
+  recorded_at: Mon, 10 Feb 2025 22:58:32 GMT
+recorded_with: VCR 6.3.1

@@ -3,85 +3,47 @@
 # > curl "http://localhost:9292?today=3&tomorrow=0"
 
 require 'sinatra'
-require 'zache'
+require 'sinatra/reloader' if development?
+require 'sinatra/custom_logger'
+require 'logger'
 require 'net/http'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/integer'
 require 'sinatra/activerecord'
+require_relative "lib/temp_orb"
+require_relative "lib/device"
+also_reload './lib/*.rb', './helpers/*.rb' if development?
 
-$cache = Zache.new
+set :logger, Logger.new(STDOUT)
 
 # https://www.api-couleur-tempo.fr/api/docs?ui=re_doc#tag/JourTempo [inconnu, bleu, blanc, rouge] (+vert pour EJP)
 COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 0, 0], [30, 200, 0]]
 COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert)
-UNKNOWN = 0
+UNKNOWN, BLUE, WHITE, RED, GREEN = 0, 1, 2, 3, 4
 TEMPO_HP_START = 6
 TEMPO_HP_END = 22
-# 7h - 25h en France, mais j'utilise une timezone Londre pour simplifier
-EJP_HP_START = 6
-EJP_HP_END = 24
-SYNC_INTERVAL = 1 # hours
+# 07:00 to 01:00 (D+1) in France, but using London timezone to simplify (06:00 - 24:00)
+EJP_HP_START = 6  # 07:00 CET
+EJP_HP_END = 24   # 01:00 D+1 CET
+EJP_ANNOUNCE = 14 # 15:00 CET, time for the next day announce
+SYNC_INTERVAL = 1.hour # +jitter
+PASSWORD = ENV['PASSWORD'] || 'test'
 
-set :database, {adapter: "sqlite3", database: "data/db.sqlite3"}
-
-class Device < ActiveRecord::Base
-  validates :mode, presence: true, inclusion: { in: %w(tempo ejp) }
-end
-
-unless ActiveRecord::Base.connection.table_exists?(:devices)
-  ActiveRecord::Schema.define do
-    create_table :devices do |t|
-      t.string :mode, null: false, default: 'tempo'
-      t.timestamps
-    end
-  end
-end
-
-def updateLEDs today, tomorrow, timing:, fx: "none", brightness: 1
-  { action: "updateLEDs", timing: timing, topLEDs: {RGB: COLORS[today].map { (_1 * brightness).to_i }, FX: fx}, bottomLEDs: {RGB: COLORS[tomorrow].map { (_1 * brightness).to_i }, FX: "none"}}
-end
-
-def tempo_color_for time
-  tempo_day = (time - TEMPO_HP_START.hours).to_date
-  # Alternative: https://www.services-rte.com/cms/open_data/v1/tempoLight
-  get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").fetch('codeJour', UNKNOWN)
-end
-
-def ejp_color_for time
-  ejp_day = time.to_date
-  response = get_json("https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement",
-    headers: {"Accept": "application/json", "application-origine-controlee" => "site_RC", "situation-usage" => "Jours Effacement"},
-    params: {
-      dateApplicationBorneInf: ejp_day.strftime("%Y-%-m-%-d"),
-      dateApplicationBorneSup: ejp_day.strftime("%Y-%-m-%-d"),
-      option: 'EJP', identifiantConsommateur: "src"
-    })
-  statut = response.dig('content', 'options', 0, 'calendrier', 0, 'statut')
-  case statut
-  when "EJP"
-    code = 3 # rouge
-  when "NON_EJP"
-    code = 4 # vert
-    code = UNKNOWN if ejp_day > Date.today && time.hour < 15 # lendemain pas trop sûr encore
-  else
-    code = UNKNOWN
-  end
-  puts "> #{statut} → #{code}"
-  code
-end
-
-def protected!
-  auth = Rack::Auth::Basic::Request.new(request.env)
-  unless auth.provided? && auth.basic? && auth.credentials == ['admin', '*$dmB25$TxNUup5yE6TC2Dv!']
-    headers['WWW-Authenticate'] = 'Basic realm="Restricted Area"'
-    halt 401, 'Not authorized'
-  end
-end
+database = ENV["RACK_ENV"] == "test" ? ":memory:" : "data/db.sqlite3"
+set :database, { adapter: "sqlite3", database: database }
 
 helpers do
+  def protected!
+    auth = Rack::Auth::Basic::Request.new(request.env)
+    unless auth.provided? && auth.basic? && auth.credentials == ['admin', PASSWORD]
+      headers['WWW-Authenticate'] = 'Basic realm="Restricted Area"'
+      halt 401, 'Not authorized'
+    end
+  end
+
   def color_display index
     color = COLORS[index]
-    color = [100, 100, 100] if index == 0 # black would not be readable on black
+    color = [100, 100, 100] if index == 0 # black would not be readable on the admin background
     "<span style='color: rgb(#{color.join(', ')});'>● #{COLOR_NAMES[index]}</span>"
   end
 end
@@ -89,62 +51,24 @@ end
 get "/" do
   device_id = params[:id]
   now = Time.now.in_time_zone('Europe/Paris')
-  puts "[#{now}] New request from #{request.ip} (device_id: #{device_id}, user-agent: #{request.user_agent})"
+  logger.info "[#{now}] New request from #{request.ip} (device_id: #{device_id}, user-agent: #{request.user_agent})"
   device = Device.find_or_create_by(id: device_id.to_i) if device_id.to_i > 0
-  puts "[#{now}] Device #{device.id} (mode: #{device.mode}, created: #{device.created_at}, last_update: #{device.updated_at})" if device
+  logger.info "[#{now}] Device #{device.id} (mode: #{device.mode}, created: #{device.created_at}, last_update: #{device.updated_at})" if device
   device&.touch
-  case params[:mode] || device&.mode
-  when 'ejp'
-    # Timezone 1h en avance sur la France, pour simplifier la gestion de la fin à 1h (ca passe a minuit)
-    now = now.in_time_zone('Europe/London')
-    today = params[:today]&.to_i || ejp_color_for(now)
-    tomorrow = params[:tomorrow]&.to_i || ejp_color_for(now.tomorrow)
-    hp = now.hour.between?(EJP_HP_START, EJP_HP_END-1)
-    end_of_today = now.change(hour: EJP_HP_END)
-    end_of_tomorrow = end_of_today + 1.day
-    no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
-    puts "[#{now}] EJP HP: #{hp}, Today: #{COLOR_NAMES[today]} (→ #{end_of_today}), Tomorrow: #{COLOR_NAMES[tomorrow]} (→ #{end_of_tomorrow})"
-    actions = [
-      updateLEDs(today, tomorrow, timing: "initial", fx: (hp && today == 3 ? "breathingRingHalf" : "none"), brightness: (hp ? 1 : 0.5)),
-      { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).utc.iso8601 },
-      { action: "error_noData", timing: no_data.utc.iso8601 }
-    ]
-    if !hp
-      actions << updateLEDs(today, tomorrow, timing: now.change(hour: EJP_HP_START).utc.iso8601, fx: (today == 3 ? "breathingRingHalf" : "none"))
-    end
-    if tomorrow != UNKNOWN
-      actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.utc.iso8601, brightness: 0.5)
-      actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: EJP_HP_START).utc.iso8601, fx: (tomorrow == 3 ? "breathingRingHalf" : "none"))
-    end
-  else
-    today = params[:today]&.to_i || tempo_color_for(now)
-    tomorrow = params[:tomorrow]&.to_i || tempo_color_for(now.tomorrow)
-    hp = now.hour.between?(TEMPO_HP_START, TEMPO_HP_END-1)
-    end_of_today = (now.hour < TEMPO_HP_START ? now.change(hour: TEMPO_HP_START) : now.tomorrow.change(hour: TEMPO_HP_START))
-    end_of_tomorrow = end_of_today + 1.day
-    no_data = (tomorrow == UNKNOWN ? end_of_today : end_of_tomorrow)
-    puts "[#{now}] Tempo HP: #{hp}, Today: #{COLOR_NAMES[today]} (→ #{end_of_today}), Tomorrow: #{COLOR_NAMES[tomorrow]} (→ #{end_of_tomorrow})"
-    actions = [
-      updateLEDs(today, tomorrow, timing: "initial", fx: (hp && today == 3 ? "breathingRingHalf" : "none"), brightness: (hp ? 1 : 0.5)),
-      { action: "syncAPI", timing: (now + SYNC_INTERVAL * 3600 + rand(3600)).utc.iso8601 },
-      { action: "error_noData", timing: no_data.utc.iso8601 }
-    ]
-    if hp
-      actions << updateLEDs(today, tomorrow, timing: now.change(hour: TEMPO_HP_END).utc.iso8601, brightness: 0.5)
-    end
-    if tomorrow != UNKNOWN
-      actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.utc.iso8601, fx: (tomorrow == 3 ? "breathingRingHalf" : "none"))
-      actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: TEMPO_HP_END).utc.iso8601, brightness: 0.5)
-    end
-  end
+
+  mode = params[:mode] || device&.mode || 'tempo'
+  actions = TempOrb.actions_for(now, mode:, today: params[:today], tomorrow: params[:tomorrow])
+
+  response = { mode:, time: now.utc.iso8601, actions: actions }.to_json
+  logger.info { "[#{now}] Response: #{response}" }
   content_type :json
-  { time: now.utc.iso8601, actions: actions }.to_json.tap { puts "[#{now}] Response: #{_1}" }
+  response
 end
 
 get '/admin' do
   protected!
   @now = Time.now.in_time_zone('Europe/Paris')
-  erb :admin, layout: :main
+  erb :admin, layout: :layout
 end
 
 get '/devices/:id/change_mode' do
@@ -157,71 +81,3 @@ get '/devices/:id/change_mode' do
   end
   redirect '/admin'
 end
-
-def get_json url, params: nil, headers: {}
-  url = URI(url)
-  url.query = URI.encode_www_form(params) if params
-
-  $cache.get("get_json/#{url}", lifetime: 600) do
-    http = Net::HTTP.new(url.host, url.port)
-    http.use_ssl = true
-    http.open_timeout = 5
-    http.read_timeout = 10
-
-    request = Net::HTTP::Get.new(url)
-    request["Accept"] = "application/json"
-    headers.each { request[_1] = _2 }
-
-    puts "> Query #{url}"
-
-    begin
-      response = http.request(request)
-      if Net::HTTPSuccess === response && response['Content-Type']&.include?('application/json')
-        puts "> Response #{response.code} #{response.body}"
-        JSON.parse(response.body)
-      else
-        puts "> Error #{response.code} #{response.body}"
-        { error: "#{response.code} #{response.body}" }
-      end
-    rescue StandardError => error
-      puts "> #{error.class}: #{error.message}"
-      { error: "#{error.class} #{error.message}" }
-    end
-  end
-end
-
-# Views
-__END__
-@@ main
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TempOrb Admin</title>
-  <link rel="stylesheet" href="https://fonts.xz.style/serve/inter.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@exampledev/new.css@1.1.2/new.min.css">
-</head>
-<body>
-  <header><h1><%= $icon ||= File.read('icon.svg') %> TempOrb Admin</h1></header>
-  <main><%= yield %></main>
-  <footer style="color: #888">
-    <div style="float: right"><%= @now %></div>
-    TEMPO: <%= color_display(tempo_color_for(@now)) %> / <%= color_display(tempo_color_for(@now.tomorrow)) %><br>
-    EJP: <%= color_display(ejp_color_for(@now)) %> / <%= color_display(ejp_color_for(@now.tomorrow)) %>
-  </footer>
-</body>
-</html>
-
-@@ admin
-<table>
-  <tr><th>Device ID</th><th>Mode</th><th>First Poll</th><th>Last Poll / Update</th></tr>
-  <% Device.all.each do |device| %>
-    <tr>
-      <td><%= device.id.to_s(16).upcase %></td>
-      <td><strong><%= device.mode.upcase %></strong> <a href="/devices/<%= device.id %>/change_mode">⇄</a></td>
-      <td><%= device.created_at.in_time_zone('Europe/Paris') %></td>
-      <td><%= device.updated_at.in_time_zone('Europe/Paris') %></td>
-    </tr>
-  <% end %>
-</table>

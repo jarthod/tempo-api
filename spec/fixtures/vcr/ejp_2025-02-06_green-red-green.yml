@@ -1,0 +1,237 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement?dateApplicationBorneInf=2025-2-6&dateApplicationBorneSup=2025-2-6&identifiantConsommateur=src&option=EJP
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - api-commerce.edf.fr
+      Application-Origine-Controlee:
+      - site_RC
+      Situation-Usage:
+      - Jours Effacement
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Access-Control-Allow-Origin:
+      - "*"
+      X-Content-Type-Options:
+      - nosniff
+      Access-Control-Allow-Methods:
+      - GET, PUT, POST, DELETE, PATCH, OPTIONS
+      Pragma:
+      - no-cache
+      Access-Control-Allow-Headers:
+      - DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization
+      X-Frame-Options:
+      - DENY
+      Referrer-Policy:
+      - no-referrer
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Access-Control-Allow-Credentials:
+      - 'true'
+      X-B3-Sampled:
+      - '0'
+      X-Xss-Protection:
+      - 1; mode=block
+      Access-Control-Max-Age:
+      - '1728000'
+      Content-Type:
+      - application/json
+      Vary:
+      - Accept-Encoding
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Expires:
+      - Tue, 11 Feb 2025 09:53:50 GMT
+      Date:
+      - Tue, 11 Feb 2025 09:53:50 GMT
+      Content-Length:
+      - '251'
+      Connection:
+      - keep-alive
+      Set-Cookie:
+      - JSESSIONID=56DA018FD9568CE6417E5CACBD75815D; Path=/gateway/Commerce_Active_Et/v1;
+        Secure; HttpOnly
+      - TS0160e7e7=011decc5fef460fe12b90f7f4021d23ace328da76964ce5c74df587d654f6c11922d73da5af6c899fb0a872a2b6e7da7cbc188b0ad;
+        path=/gateway/Commerce_Active_Et/v1
+      - TS01a3d7ba=011decc5fef460fe12b90f7f4021d23ace328da76964ce5c74df587d654f6c11922d73da5af6c899fb0a872a2b6e7da7cbc188b0ad;
+        Path=/;
+      - _abck=70CC5679389C923BC6996BF2B946B381~-1~YAAQQO8WAvM1YrCUAQAAQORt9A2BeTUF74SeT4/pgJSLRMz47+xLKUoftCrwUv6hEzlp980bJS2cw/3XTd3b42mqZvHe0HwT9mwqWdoK8R/e6KT4l7byJ7SjyH0P3jNWOPPmbP++rMPg+G9Zly2UyV9W+fMto6mAkpMB6yPvUGE3KzEsUtAJU+1qiMHWkgqeQ5ABoJHawc59oCRlkFSjUaBcWLPNTGSa+3KprfqY0wRBVsR1liUPv3PunocIX+9JQh3xIIl9QBtvJyMW+n2OBZMnWyYi9plgj/6U9mXkkMswSKH6JVYggf28vZpTEd5eny9ctWElY+PBbm9dDGl8j3pYfEVBAocw/jLLwUOtI8W+sXqpMcFz8OmUtxb4EdZAI92qctpJSLNiC5PyVqZOwvsOLK5+4g==~-1~-1~-1;
+        Domain=.edf.fr; Path=/; Expires=Wed, 11 Feb 2026 09:53:50 GMT; Max-Age=31536000;
+        Secure
+      - bm_sz=2737E1239AA8CABB04DB34B265B0297E~YAAQQO8WAvQ1YrCUAQAAQORt9Bqkmgn8UclhNfuU7YUwY8SGXEPazGnC2u+tm8ddDik1AyZrG1bMkihjK5VYM/icKEXDQ4TnkDcaMADRLbvmSJhC9hOX9BwXRBPCeWssqGjDN7jY41ipVsTmMn7Jxw2rtKlPT+N+dqcw+rSUGdr4X3hkheV7NdEg4wOTFJn8Uv7OENDUdn+10VyDeXF6p/+vTsH6L96GJTRvcfpJz8jq6l1HCDg/VwcYOBOQxiTPMv1liSzLy1d61PC7IrVJotZR9U/ZItbm84Afc88GMp8GncF8PQgNpN66s7PN8Ffa6pVDA8mV5xFiIoPLXlvzvlp7tKc/ROa6WEY=~4605252~4473155;
+        Domain=.edf.fr; Path=/; Expires=Tue, 11 Feb 2025 13:53:49 GMT; Max-Age=14399
+    body:
+      encoding: UTF-8
+      string: '{"errors":[],"content":{"dateApplicationBorneInf":"2025-02-06","dateApplicationBorneSup":"2025-02-06","dateHeureTraitementActivET":"2025-02-11T09:53:50Z","options":[{"option":"EJP","calendrier":[{"dateApplication":"2025-02-06","statut":"NON_EJP"}]}]}}'
+  recorded_at: Tue, 11 Feb 2025 09:53:50 GMT
+- request:
+    method: get
+    uri: https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement?dateApplicationBorneInf=2025-2-7&dateApplicationBorneSup=2025-2-7&identifiantConsommateur=src&option=EJP
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - api-commerce.edf.fr
+      Application-Origine-Controlee:
+      - site_RC
+      Situation-Usage:
+      - Jours Effacement
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Access-Control-Allow-Origin:
+      - "*"
+      X-Content-Type-Options:
+      - nosniff
+      Access-Control-Allow-Methods:
+      - GET, PUT, POST, DELETE, PATCH, OPTIONS
+      Pragma:
+      - no-cache
+      Access-Control-Allow-Headers:
+      - DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization
+      X-Frame-Options:
+      - DENY
+      Referrer-Policy:
+      - no-referrer
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Access-Control-Allow-Credentials:
+      - 'true'
+      X-B3-Sampled:
+      - '0'
+      X-Xss-Protection:
+      - 1; mode=block
+      Access-Control-Max-Age:
+      - '1728000'
+      Content-Type:
+      - application/json
+      Vary:
+      - Accept-Encoding
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Expires:
+      - Tue, 11 Feb 2025 09:53:50 GMT
+      Date:
+      - Tue, 11 Feb 2025 09:53:50 GMT
+      Content-Length:
+      - '247'
+      Connection:
+      - keep-alive
+      Set-Cookie:
+      - JSESSIONID=3F5D1E0E8F4197441B5DBF778632C970; Path=/gateway/Commerce_Active_Et/v1;
+        Secure; HttpOnly
+      - TS0160e7e7=011decc5fe39640f39b3a54a1ac877d873a2211a0cfa95c65c961e27c90247f1123a52ecf1e5772fa2b13ade0ef471f8166cbea7ce;
+        path=/gateway/Commerce_Active_Et/v1
+      - TS01a3d7ba=011decc5fe39640f39b3a54a1ac877d873a2211a0cfa95c65c961e27c90247f1123a52ecf1e5772fa2b13ade0ef471f8166cbea7ce;
+        Path=/;
+      - _abck=74E9E06DEA44F4E83830B0D654C27431~-1~YAAQQO8WAvc1YrCUAQAA6uRt9A3rwDwLT4fqK6OTrJ0mbo8gfbC7kmzsK6c8w//VQmP9DCS2Stb19Z7s5dP/yv8VyLJoBMY+tq9T+JAhTwyIaBalRZBU9WAJbWxMOgzdyfDW3cGtFWLK1GIzXEi9TxJbAB3UU9KhYbNqlv7Fk9zkzD0KqSrWtFKSsm0l/Le7QEkLeQKc/EwkBekIrb5YX/D7Bz/EVZwk5dLFgUd5LAlg6KHzJ00Sqjv4U5Dakl8fkmDB/AATkNUVTxr9hzA7OY4aw8o6gbHZ+8EDjqxc724YKP9NUSbkIiSY6dIyUL2+fx5IZearf+wucyUvGBzQPfGv8v2wTJg9Mkj6wZ45GmMTmbrOSzJLkM42k89K8afOdExqrtq6+Vj2uZhx1lpAPqsHREZP1Q==~-1~-1~-1;
+        Domain=.edf.fr; Path=/; Expires=Wed, 11 Feb 2026 09:53:50 GMT; Max-Age=31536000;
+        Secure
+      - bm_sz=93404D492491C3A3F5D6FEF0BE253658~YAAQQO8WAvg1YrCUAQAA6uRt9BoRAfNPGjrjUniOMy0uk+p3kTOmc/goC3rWHQRoZwQAHu4IBnDhLBM+UcVnnaIuudSf5gvrDn3/WSTw5o/9zR4YsGsFSyfsW3NyjXmEbBsSQsvO/cKrfxJP/oGwWnuRSDotoY+ovJxXRgi1QVgqqldLTHP6MKpDWlOUjZLxBbdva1Yk52Emh96o7HsFr8DHk+vMnvOGZKsTPWgn8nSrhYiDR/r3yR3jbPjMtqSa7fHFE8qUHGLrxg3FYiVDjo9oQ0yAWftJxhveHxsLleeaY4GngFffqi9/oAlT55gOyPgySgdwS0dlBIwNm+CFSWNLCNv1wG5tvRs=~3485744~3422259;
+        Domain=.edf.fr; Path=/; Expires=Tue, 11 Feb 2025 13:53:50 GMT; Max-Age=14400
+    body:
+      encoding: UTF-8
+      string: '{"errors":[],"content":{"dateApplicationBorneInf":"2025-02-07","dateApplicationBorneSup":"2025-02-07","dateHeureTraitementActivET":"2025-02-11T09:53:50Z","options":[{"option":"EJP","calendrier":[{"dateApplication":"2025-02-07","statut":"EJP"}]}]}}'
+  recorded_at: Tue, 11 Feb 2025 09:53:50 GMT
+- request:
+    method: get
+    uri: https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement?dateApplicationBorneInf=2025-2-8&dateApplicationBorneSup=2025-2-8&identifiantConsommateur=src&option=EJP
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - api-commerce.edf.fr
+      Application-Origine-Controlee:
+      - site_RC
+      Situation-Usage:
+      - Jours Effacement
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Access-Control-Allow-Origin:
+      - "*"
+      X-Content-Type-Options:
+      - nosniff
+      Access-Control-Allow-Methods:
+      - GET, PUT, POST, DELETE, PATCH, OPTIONS
+      Pragma:
+      - no-cache
+      Access-Control-Allow-Headers:
+      - DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization
+      X-Frame-Options:
+      - DENY
+      Referrer-Policy:
+      - no-referrer
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Access-Control-Allow-Credentials:
+      - 'true'
+      X-B3-Sampled:
+      - '0'
+      X-Xss-Protection:
+      - 1; mode=block
+      Access-Control-Max-Age:
+      - '1728000'
+      Content-Type:
+      - application/json
+      Vary:
+      - Accept-Encoding
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Expires:
+      - Tue, 11 Feb 2025 09:53:50 GMT
+      Date:
+      - Tue, 11 Feb 2025 09:53:50 GMT
+      Content-Length:
+      - '251'
+      Connection:
+      - keep-alive
+      Set-Cookie:
+      - JSESSIONID=AECAB1AF3B2AE8CDD3F89800A4C544E8; Path=/gateway/Commerce_Active_Et/v1;
+        Secure; HttpOnly
+      - TS0160e7e7=011decc5fe86917b4de4de9d89581685a5d7fabb27f38c50fa83c5cd53dd7f8fa5cf00ebf7634f93a157349cefc0810b438c91ff3b;
+        path=/gateway/Commerce_Active_Et/v1
+      - TS01a3d7ba=011decc5fe86917b4de4de9d89581685a5d7fabb27f38c50fa83c5cd53dd7f8fa5cf00ebf7634f93a157349cefc0810b438c91ff3b;
+        Path=/;
+      - _abck=3740CFDBBA84DACD2734BAA42D22D1D1~-1~YAAQQO8WAv01YrCUAQAAtOVt9A3TZK+ZDMOuxojYlR5hAV7NqOBCqdS/eZhwgsKoozYU4BkAZRmO+Ysv0WDe3wtIl9mIUu/ba9lykNwAr0Pb1YT+kYhNtm7ywrOmqkwYI0Mmy1pvN/Rm4EHueq39wkU+VzZxEZpgEzp0JX0u5m0NWOw4WiODDi3TMuO0QOKqVQgRP58Q1p3VNfFYPhwrqI5FaZKvPzpcFabKwMAioh3jxaajK2kR0cf3XF3lAKG3YJKGaal7aeAet42mC+Dfj5/iHbSPw5fwkYQZX3+1I1/pxtQFm9NogUvzsxtA1HjUHev6i0ToLWZq4c0f3spRohL47xPvP0uRbFu34u51YXImOshzvVWKX4/AZJTCpxtP3bXD3IK9QgZ4Rmn4wuTKerCfEtR17w==~-1~-1~-1;
+        Domain=.edf.fr; Path=/; Expires=Wed, 11 Feb 2026 09:53:50 GMT; Max-Age=31536000;
+        Secure
+      - bm_sz=26C272906CD6DA698B5CFC310D55607D~YAAQQO8WAv41YrCUAQAAtOVt9BqSJRlip8cQYmKZhaoZ0vCsWbeVV6xBN7DiM3h4LllZyAUN5g0ICz+uc+wK5MPZPPLithZqSylvxToeUXa4p9HplJDqyRENSvUzGcrkYWkb7fMWJn9whlE3Qc0pfNLrDEGE5aWJ5nT1Lax1/d+FIOyvUZCoBGTCwiil/yyXg0xRGp4iAenNWD0fJJLjI92E0z/51sSnkDIISNxT+md43l4aNbWSLD5+dM+e21h5na6K8Djka8WgmzqxTAh//Wb9soHDI214C/WLQMG1KnHmi87C3JS6bdhSUxD37xYaVrWOKDOPUXjvoi4YFzBYT+fVpQ36DmmvH5E=~3485744~3422259;
+        Domain=.edf.fr; Path=/; Expires=Tue, 11 Feb 2025 13:53:50 GMT; Max-Age=14400
+    body:
+      encoding: UTF-8
+      string: '{"errors":[],"content":{"dateApplicationBorneInf":"2025-02-08","dateApplicationBorneSup":"2025-02-08","dateHeureTraitementActivET":"2025-02-11T09:53:50Z","options":[{"option":"EJP","calendrier":[{"dateApplication":"2025-02-08","statut":"NON_EJP"}]}]}}'
+  recorded_at: Tue, 11 Feb 2025 09:53:50 GMT
+recorded_with: VCR 6.3.1
