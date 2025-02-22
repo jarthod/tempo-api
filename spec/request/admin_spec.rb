@@ -21,7 +21,8 @@ RSpec.describe '/admin', :request do
         visit '/admin'
       end
       expect(page.status_code).to eq(200)
-      expect(page).to have_content('TEMPO: ● Blanc / ● Blanc')
+      expect(page).to have_content('TEMPO: ● Blanc / ● Blanc (api-couleur-tempo.fr)')
+      expect(page).to have_content('TEMPO: ● Inconnu / ● Inconnu (services-rte.com)') # does not support looking back in time
       expect(page).to have_content('EJP: ● Vert / ● Rouge')
     end
 
