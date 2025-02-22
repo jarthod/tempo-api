@@ -12,7 +12,7 @@ RSpec.describe '/admin', :request do
 
   context "with password" do
     before do
-      stub_const("EDF::TEMPO_API", :couleur)
+      stub_const("EDF::DEFAULT_TEMPO_API", :couleur)
       page.driver.browser.basic_authorize 'admin', 'test'
    end
 

@@ -12,8 +12,9 @@
   <main><%= yield %></main>
   <footer style="color: #888">
     <div style="float: right"><%= @now %></div>
-    TEMPO: <%= color_display(EDF.tempo_color_for(@now)) %> / <%= color_display(EDF.tempo_color_for(@now.tomorrow)) %><br>
-    EJP: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %>
+    TEMPO: <%= color_display(EDF.tempo_color_for(@now)) %> / <%= color_display(EDF.tempo_color_for(@now.tomorrow)) %> (services-rte.com) <%= "[primary]" if EDF::DEFAULT_TEMPO_API == :rte %><br>
+    TEMPO: <%= color_display(EDF.tempo_color_for(@now, api: :couleur)) %> / <%= color_display(EDF.tempo_color_for(@now.tomorrow, api: :couleur)) %> (api-couleur-tempo.fr) <%= "[primary]" if EDF::DEFAULT_TEMPO_API == :couleur %><br>
+    EJP: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %> (api-commerce.edf.fr)
   </footer>
 </body>
 </html>

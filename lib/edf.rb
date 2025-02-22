@@ -2,21 +2,19 @@ $cache = ActiveSupport::Cache::FileStore.new("tmp/cache")
 
 module EDF
   RTE_COLORS = {"BLUE" => 1, "WHITE" => 2, "RED" => 3}
-  TEMPO_API = :rte
+  DEFAULT_TEMPO_API = :rte # or :couleur
 
-  def self.tempo_color_for time
+  def self.tempo_color_for time, api: DEFAULT_TEMPO_API
     tempo_day = (time - TEMPO_HP_START.hours).to_date
-    # Alternative: https://www.services-rte.com/cms/open_data/v1/tempoLight
-    case TEMPO_API
+    case api
     when :rte
       values = get_json("https://www.services-rte.com/cms/open_data/v1/tempoLight")['values']
-      if values["#{tempo_day}-fallback"] == 'false'
+      if values && values["#{tempo_day}-fallback"] == 'false'
         return RTE_COLORS[values[tempo_day.to_s]]
       else
         return UNKNOWN
       end
     when :couleur
-      # Down with 503 since 2025-02-22
       get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").fetch('codeJour', UNKNOWN)
     end
   end
