@@ -3,7 +3,9 @@ require 'app_helper'
 RSpec.describe EDF do
   before { $cache.clear } # make sure we hit the VCR cassette
 
-  describe ".tempo_color_for" do
+  describe ".tempo_color_for (api-couleur-tempo.fr)" do
+    before { stub_const("EDF::TEMPO_API", :couleur) }
+
     it "returns correct color for the period" do
       VCR.use_cassette("tempo 2025-02-02 blue-red-white") do
         time = Time.new(2025, 2, 3, 6, 0, 0, "+01:00") # 6am: beginning of tempo RED period
@@ -26,6 +28,33 @@ RSpec.describe EDF do
       end
     end
   end
+
+  describe ".tempo_color_for (services-rte.com)" do
+    before { expect(EDF::TEMPO_API).to eq(:rte) }
+
+    it "returns correct color for the period" do
+      VCR.use_cassette("tempo RTE 2025-02-22") do
+        time = Time.new(2025, 2, 22, 6, 0, 0, "+01:00") # 6am: beginning of tempo period
+        expect(EDF.tempo_color_for(time-1)).to eq(UNKNOWN) # we can't go back in time with this API
+        expect(EDF.tempo_color_for(time)).to eq(BLUE)
+        time += (22-6).hours # 10pm: end of on-duty hours
+        expect(EDF.tempo_color_for(time)).to eq(BLUE)
+        time += 2.hours # 0am: next day but still in the blue period
+        expect(EDF.tempo_color_for(time)).to eq(BLUE)
+        time += 6.hours # 6am: beginning next period
+        expect(EDF.tempo_color_for(time-1)).to eq(BLUE)
+        expect(EDF.tempo_color_for(time)).to eq(BLUE)
+      end
+    end
+
+    # it "returns unknown for the future" do
+    #   VCR.use_cassette("tempo 2025-02-12 unknown") do
+    #     time = Time.new(2025, 2, 12, 6, 0, 0, "+01:00") # recorded on 2025-03-11
+    #     expect(EDF.tempo_color_for(time)).to eq(UNKNOWN)
+    #   end
+    # end
+  end
+
 
   describe ".ejp_color_for" do
     it "returns correct color for the period" do

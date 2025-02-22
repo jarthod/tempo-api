@@ -1,0 +1,44 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://www.services-rte.com/cms/open_data/v1/tempoLight
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - www.services-rte.com
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Sat, 22 Feb 2025 12:00:02 GMT
+      Set-Cookie:
+      - JSESSIONID=EEAEEAC7F1734C26CB35297BB01057B2.cortexprdsa006vm; Path=/; Secure;
+        HttpOnly
+      Expires:
+      - Wed, 09 May 1979 05:30:00 GMT
+      Cache-Control:
+      - no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0
+      Pragma:
+      - no-cache
+      Vary:
+      - accept-encoding
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+    body:
+      encoding: ASCII-8BIT
+      string: '{"values":{"2025-02-23-fallback":"false","2025-02-22-fallback":"false","2025-02-23":"BLUE","2025-02-22":"BLUE"}}'
+  recorded_at: Sat, 22 Feb 2025 12:00:02 GMT
+recorded_with: VCR 6.3.1

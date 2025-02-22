@@ -1,13 +1,28 @@
 $cache = ActiveSupport::Cache::FileStore.new("tmp/cache")
 
 module EDF
+  RTE_COLORS = {"BLUE" => 1, "WHITE" => 2, "RED" => 3}
+  TEMPO_API = :rte
+
   def self.tempo_color_for time
     tempo_day = (time - TEMPO_HP_START.hours).to_date
     # Alternative: https://www.services-rte.com/cms/open_data/v1/tempoLight
-    get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").fetch('codeJour', UNKNOWN)
+    case TEMPO_API
+    when :rte
+      values = get_json("https://www.services-rte.com/cms/open_data/v1/tempoLight")['values']
+      if values["#{tempo_day}-fallback"] == 'false'
+        return RTE_COLORS[values[tempo_day.to_s]]
+      else
+        return UNKNOWN
+      end
+    when :couleur
+      # Down with 503 since 2025-02-22
+      get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").fetch('codeJour', UNKNOWN)
+    end
   end
 
   def self.ejp_color_for time
+    time = time.in_time_zone('Europe/London')
     ejp_day = time.to_date
     response = get_json("https://api-commerce.edf.fr/commerce/activet/v1/calendrier-jours-effacement",
       headers: {"Accept": "application/json", "application-origine-controlee" => "site_RC", "situation-usage" => "Jours Effacement"},

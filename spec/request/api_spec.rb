@@ -9,6 +9,7 @@ RSpec.describe '/' do
     end
 
     it "returns expected colors during HP (hitting real data)" do
+      stub_const("EDF::TEMPO_API", :couleur)
       VCR.use_cassette("tempo 2025-02-02 blue-red-white", record: :none) do
         get '/'
       end

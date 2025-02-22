@@ -11,7 +11,10 @@ RSpec.describe '/admin', :request do
   end
 
   context "with password" do
-    before { page.driver.browser.basic_authorize 'admin', 'test' }
+    before do
+      stub_const("EDF::TEMPO_API", :couleur)
+      page.driver.browser.basic_authorize 'admin', 'test'
+   end
 
     it "display current colors" do
       VCR.use_cassette("/admin") do
