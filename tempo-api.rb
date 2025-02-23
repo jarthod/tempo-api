@@ -68,6 +68,7 @@ end
 get '/admin' do
   protected!
   @now = Time.now.in_time_zone('Europe/Paris')
+  @tempo_day = (@now - TEMPO_HP_START.hours).to_date
   erb :admin, layout: :layout
 end
 

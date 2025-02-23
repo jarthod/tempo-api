@@ -19,6 +19,10 @@ RSpec.configure do |config|
     load "./db/schema.rb"
   end
 
+  config.before(:each) do
+    $cache.clear # make sure we hit the VCR cassette
+  end
+
   config.after(:each) do
     ActiveRecord::Base.connection.tables.each do |table|
       next if table == "schema_migrations" # Don't delete migration records

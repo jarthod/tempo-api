@@ -33,8 +33,8 @@ module TempOrb
       end
     when 'tempo'
       now = now.in_time_zone('Europe/Paris')
-      today = today&.to_i || EDF.tempo_color_for(now)
-      tomorrow = tomorrow&.to_i || EDF.tempo_color_for(now.tomorrow)
+      today = today&.to_i || EDF.cached_tempo_color_for(now)
+      tomorrow = tomorrow&.to_i || EDF.cached_tempo_color_for(now.tomorrow)
       hp = now.hour.between?(TEMPO_HP_START, TEMPO_HP_END-1)
       end_of_today = (now.hour < TEMPO_HP_START ? now.change(hour: TEMPO_HP_START) : now.tomorrow.change(hour: TEMPO_HP_START))
       end_of_tomorrow = end_of_today + 1.day

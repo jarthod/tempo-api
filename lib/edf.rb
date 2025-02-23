@@ -2,19 +2,35 @@ $cache = ActiveSupport::Cache::FileStore.new("tmp/cache")
 
 module EDF
   RTE_COLORS = {"BLUE" => 1, "WHITE" => 2, "RED" => 3}
-  DEFAULT_TEMPO_API = :rte # or :couleur
+  TEMPO_APIS = ['api-couleur-tempo.fr', 'services-rte.com']
 
-  def self.tempo_color_for time, api: DEFAULT_TEMPO_API
+  def self.cached_tempo_color_for time
     tempo_day = (time - TEMPO_HP_START.hours).to_date
-    case api
-    when :rte
-      values = get_json("https://www.services-rte.com/cms/open_data/v1/tempoLight")['values']
-      if values && values["#{tempo_day}-fallback"] == 'false'
-        return RTE_COLORS[values[tempo_day.to_s]]
-      else
-        return UNKNOWN
+    cache_key = "tempo_color/#{tempo_day}"
+    if color = $cache.read(cache_key)
+      return color
+    else
+      color = tempo_color_for(tempo_day, api: TEMPO_APIS[0])
+      color = tempo_color_for(tempo_day, api: TEMPO_APIS[1]) if color <= UNKNOWN
+      if color > UNKNOWN
+        $cache.write(cache_key, color, expires_in: 2.days)
       end
-    when :couleur
+      color
+    end
+  end
+
+  def self.tempo_color_for tempo_day, api:
+    case api
+    when 'services-rte.com'
+      values = get_json("https://www.services-rte.com/cms/open_data/v1/tempoLight")['values']
+      if values&.dig("#{tempo_day}-fallback") == 'false'
+        RTE_COLORS[values[tempo_day.to_s]]
+      elsif values&.dig("#{tempo_day}-fallback") == 'true'
+        UNKNOWN
+      else
+        UNKNOWN # other type of errors
+      end
+    when 'api-couleur-tempo.fr'
       get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").fetch('codeJour', UNKNOWN)
     end
   end

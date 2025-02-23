@@ -1,53 +1,88 @@
 require 'app_helper'
 
 RSpec.describe EDF do
-  before { $cache.clear } # make sure we hit the VCR cassette
+  describe ".cached_tempo_color_for" do
+    it "returns correct color for the period" do
+      VCR.use_cassette("tempo 2025-02-02 blue-red-white") do
+        time = Time.new(2025, 2, 3, 6, 0, 0, "+01:00") # 6am: beginning of tempo RED period
+        expect(EDF.cached_tempo_color_for(time-1)).to eq(BLUE)
+        expect(EDF.cached_tempo_color_for(time)).to eq(RED)
+        time += (22-6).hours # 10pm: end of on-duty hours
+        expect(EDF.cached_tempo_color_for(time)).to eq(RED)
+        time += 2.hours # 0am: next day but still in the RED period
+        expect(EDF.cached_tempo_color_for(time)).to eq(RED)
+        time += 6.hours # 6am: beginning next period (WHITE)
+        expect(EDF.cached_tempo_color_for(time-1)).to eq(RED)
+        expect(EDF.cached_tempo_color_for(time)).to eq(WHITE)
+      end
+      # entries are cached
+      expect($cache.read("tempo_color/2025-02-02")).to eq(BLUE)
+      expect($cache.read("tempo_color/2025-02-03")).to eq(RED)
+      expect($cache.read("tempo_color/2025-02-04")).to eq(WHITE)
+    end
+
+    it "returns unknown for the future (no cache)" do
+      date = Date.new(2025, 2, 12)
+      expect(EDF).to receive(:tempo_color_for).with(date, api: 'api-couleur-tempo.fr').once.and_call_original
+      expect(EDF).to receive(:tempo_color_for).with(date, api: 'services-rte.com').once.and_return(UNKNOWN)
+      VCR.use_cassette("tempo 2025-02-12 unknown") do
+        time = Time.new(2025, 2, 12, 6, 0, 0, "+01:00") # recorded on 2025-03-11
+        expect(EDF.cached_tempo_color_for(time)).to eq(UNKNOWN)
+      end
+      # entry is NOT cached (never cache UNKNOWN)
+      expect($cache.read("tempo_color/2025-02-12")).to be_nil
+    end
+
+    it "falls back to second API if needed" do
+      expect(EDF).to receive(:tempo_color_for).with(instance_of(Date), api: 'api-couleur-tempo.fr').exactly(3).times.and_return(UNKNOWN)
+      expect(EDF).to receive(:tempo_color_for).with(instance_of(Date), api: 'services-rte.com').exactly(3).times.and_call_original
+      VCR.use_cassette("tempo RTE 2025-02-22") do
+        time = Time.new(2025, 2, 22, 6, 0, 0, "+01:00") # 6am: beginning of tempo RED period
+        expect(EDF.cached_tempo_color_for(time-1)).to eq(UNKNOWN)
+        expect(EDF.cached_tempo_color_for(time)).to eq(BLUE)
+        expect(EDF.cached_tempo_color_for(time+1.day)).to eq(BLUE)
+      end
+      # entries are cached
+      expect($cache.read("tempo_color/2025-02-21")).to be_nil
+      expect($cache.read("tempo_color/2025-02-22")).to eq(BLUE)
+      expect($cache.read("tempo_color/2025-02-23")).to eq(BLUE)
+    end
+
+    it "returns unknown on errors" do
+      expect(EDF).to receive(:get_json).twice.and_return(error: "test") # both API tried
+      expect(EDF.cached_tempo_color_for(Time.now)).to eq(UNKNOWN)
+    end
+  end
 
   describe ".tempo_color_for" do
     context "(using api-couleur-tempo.fr)" do
       it "returns correct color for the period" do
         VCR.use_cassette("tempo 2025-02-02 blue-red-white") do
-          time = Time.new(2025, 2, 3, 6, 0, 0, "+01:00") # 6am: beginning of tempo RED period
-          expect(EDF.tempo_color_for(time-1, api: :couleur)).to eq(BLUE)
-          expect(EDF.tempo_color_for(time, api: :couleur)).to eq(RED)
-          time += (22-6).hours # 10pm: end of on-duty hours
-          expect(EDF.tempo_color_for(time, api: :couleur)).to eq(RED)
-          time += 2.hours # 0am: next day but still in the RED period
-          expect(EDF.tempo_color_for(time, api: :couleur)).to eq(RED)
-          time += 6.hours # 6am: beginning next period (WHITE)
-          expect(EDF.tempo_color_for(time-1, api: :couleur)).to eq(RED)
-          expect(EDF.tempo_color_for(time, api: :couleur)).to eq(WHITE)
+          expect(EDF.tempo_color_for(Date.new(2025, 2, 2), api: 'api-couleur-tempo.fr')).to eq(BLUE)
+          expect(EDF.tempo_color_for(Date.new(2025, 2, 3), api: 'api-couleur-tempo.fr')).to eq(RED)
+          expect(EDF.tempo_color_for(Date.new(2025, 2, 4), api: 'api-couleur-tempo.fr')).to eq(WHITE)
         end
       end
 
       it "returns unknown for the future" do
-        VCR.use_cassette("tempo 2025-02-12 unknown") do
-          time = Time.new(2025, 2, 12, 6, 0, 0, "+01:00") # recorded on 2025-03-11
-          expect(EDF.tempo_color_for(time, api: :couleur)).to eq(UNKNOWN)
+        VCR.use_cassette("tempo 2025-02-12 unknown") do # recorded on 2025-03-11
+          expect(EDF.tempo_color_for(Date.new(2025, 2, 12), api: 'api-couleur-tempo.fr')).to eq(UNKNOWN)
         end
       end
 
       it "returns unknown on errors" do
         expect(EDF).to receive(:get_json).and_return(error: "test")
-        expect(EDF.tempo_color_for(Time.now, api: :couleur)).to eq(UNKNOWN)
+        expect(EDF.tempo_color_for(Date.today, api: 'api-couleur-tempo.fr')).to eq(UNKNOWN)
       end
     end
 
     context "(using services-rte.com)" do
-      before { expect(EDF::DEFAULT_TEMPO_API).to eq(:rte) }
-
       it "returns correct color for the period" do
         VCR.use_cassette("tempo RTE 2025-02-22") do
-          time = Time.new(2025, 2, 22, 6, 0, 0, "+01:00") # 6am: beginning of tempo period
-          expect(EDF.tempo_color_for(time-1, api: :rte)).to eq(UNKNOWN) # we can't go back in time with this API
-          expect(EDF.tempo_color_for(time, api: :rte)).to eq(BLUE)
-          time += (22-6).hours # 10pm: end of on-duty hours
-          expect(EDF.tempo_color_for(time, api: :rte)).to eq(BLUE)
-          time += 2.hours # 0am: next day but still in the blue period
-          expect(EDF.tempo_color_for(time, api: :rte)).to eq(BLUE)
-          time += 6.hours # 6am: beginning next period
-          expect(EDF.tempo_color_for(time-1, api: :rte)).to eq(BLUE)
-          expect(EDF.tempo_color_for(time, api: :rte)).to eq(BLUE)
+          # we can't go back in time with this API
+          expect(EDF.tempo_color_for(Date.new(2025, 2, 21), api: 'services-rte.com')).to eq(UNKNOWN)
+          expect(EDF.tempo_color_for(Date.new(2025, 2, 22), api: 'services-rte.com')).to eq(BLUE)
+          expect(EDF.tempo_color_for(Date.new(2025, 2, 23), api: 'services-rte.com')).to eq(BLUE)
         end
       end
 
@@ -60,7 +95,7 @@ RSpec.describe EDF do
 
       it "returns unknown on errors" do
         expect(EDF).to receive(:get_json).and_return(error: "test")
-        expect(EDF.tempo_color_for(Time.now)).to eq(UNKNOWN)
+        expect(EDF.tempo_color_for(Time.now, api: 'services-rte.com')).to eq(UNKNOWN)
       end
     end
   end
