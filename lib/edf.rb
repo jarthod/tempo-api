@@ -3,6 +3,7 @@ $cache = ActiveSupport::Cache::FileStore.new("tmp/cache")
 module EDF
   RTE_COLORS = {"BLUE" => 1, "WHITE" => 2, "RED" => 3}
   TEMPO_APIS = ['api-couleur-tempo.fr', 'services-rte.com']
+  EJP_OFF_MONTH = 4..10 # Avril - Octobre
 
   def self.cached_tempo_color_for time
     tempo_day = (time - TEMPO_HP_START.hours).to_date
@@ -32,6 +33,23 @@ module EDF
       end
     when 'api-couleur-tempo.fr'
       get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").fetch('codeJour', UNKNOWN)
+    end
+  end
+
+  def self.cached_ejp_color_for time
+    time = time.in_time_zone('Europe/London')
+    ejp_day = time.to_date
+    cache_key = "ejp_color/#{ejp_day}"
+    if color = $cache.read(cache_key)
+      return color
+    elsif EJP_OFF_MONTH === ejp_day.month # NO EJP, always green
+      return GREEN
+    else
+      color = ejp_color_for(time)
+      if color > UNKNOWN
+        $cache.write(cache_key, color, expires_in: 2.days)
+      end
+      color
     end
   end
 

@@ -100,6 +100,52 @@ RSpec.describe EDF do
     end
   end
 
+  describe ".cached_ejp_color_for" do
+    it "returns correct color for the period" do
+      VCR.use_cassette("ejp 2025-02-06 green-red-green") do
+        time = Time.new(2025, 2, 7, 0, 0, 0, "+00:00") # 1am Paris (0am London): beginning of EJP RED period
+        expect(EDF.cached_ejp_color_for(time-1)).to eq(GREEN)
+        expect(EDF.cached_ejp_color_for(time)).to eq(RED)
+        time += 23.hours # 0am Paris: next day but still in the RED period
+        expect(EDF.cached_ejp_color_for(time)).to eq(RED)
+        time += 1.hours # 1am Paris: beginning next period (GREEN)
+        expect(EDF.cached_ejp_color_for(time-1)).to eq(RED)
+        expect(EDF.cached_ejp_color_for(time)).to eq(GREEN)
+      end
+      # entries are cached
+      expect($cache.read("ejp_color/2025-02-06")).to eq(GREEN)
+      expect($cache.read("ejp_color/2025-02-07")).to eq(RED)
+      expect($cache.read("ejp_color/2025-02-08")).to eq(GREEN)
+    end
+
+    it "returns unknown for the future (no cache)" do
+      expect(EDF).to receive(:ejp_color_for).once.and_return(UNKNOWN)
+      time = Time.new(2035, 2, 12, 6, 0, 0, "+01:00")
+      expect(EDF.cached_ejp_color_for(time)).to eq(UNKNOWN)
+      # entry is NOT cached (never cache UNKNOWN)
+      expect($cache.read("ejp_color/2035-02-12")).to be_nil
+    end
+
+    it "falls back to green outside of EJP period" do
+      expect(EDF).to receive(:ejp_color_for).exactly(2).times.and_return(RED)
+      expect(EDF.cached_ejp_color_for(Time.new(2025, 3, 31, 6))).to eq(RED)
+      expect(EDF.cached_ejp_color_for(Time.new(2025, 4, 1, 6))).to eq(GREEN) # outside period
+      expect(EDF.cached_ejp_color_for(Time.new(2025, 10, 31, 6))).to eq(GREEN) # outside period
+      expect(EDF.cached_ejp_color_for(Time.new(2025, 11, 1, 6))).to eq(RED)
+      # entries are cached
+      expect($cache.read("ejp_color/2025-03-31")).to eq(RED)
+      expect($cache.read("ejp_color/2025-04-01")).to be_nil # not cached
+      expect($cache.read("ejp_color/2025-10-31")).to be_nil # not cached
+      expect($cache.read("ejp_color/2025-11-01")).to eq(RED)
+    end
+
+    it "returns unknown on errors" do
+      expect(EDF).to receive(:get_json).and_return(error: "test") # both API tried
+      expect(EDF.cached_ejp_color_for(Time.new(2025, 2, 2))).to eq(UNKNOWN)
+    end
+  end
+
+
   describe ".ejp_color_for" do
     it "returns correct color for the period" do
       VCR.use_cassette("ejp 2025-02-06 green-red-green") do

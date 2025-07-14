@@ -79,6 +79,19 @@ RSpec.describe '/' do
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-08T00:00:00Z"})
     end
 
+    it "returns expected colors outside period (no API)" do
+      travel_to Time.new(2025, 4, 7, 1, 0, 0, "+01:00")
+      get '/', mode: 'ejp'
+      expect(last_response).to be_ok
+      expect(json['time']).to eq('2025-04-07T00:00:00Z')
+      expect(json['mode']).to eq('ejp')
+      # Darker green during night then light green
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[15, 100, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[15, 100, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-04-07T05:00:00Z", "topLEDs"=>{"RGB"=>[30, 200, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[30, 200, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-04-07T01:\d\d:\d\dZ/})
+      expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-04-08T23:00:00Z"})
+    end
+
     it "returns expected colors during HP (from params)" do
       travel 16.hours # moving from 01:00 to 17:00
       get '/', mode: 'ejp', today: GREEN, tomorrow: RED

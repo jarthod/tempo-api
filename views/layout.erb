@@ -16,7 +16,8 @@
     <% EDF::TEMPO_APIS.each_with_index do |api, i| %>
       <%= api == EDF::TEMPO_APIS.last ? "└" : "├" %> API <%= i+1 %>: <%= color_display(EDF.tempo_color_for(@tempo_day, api: api)) %> / <%= color_display(EDF.tempo_color_for(@tempo_day.tomorrow, api: api)) %> (<%= api %>) <br>
     <% end %>
-    EJP: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %> (api-commerce.edf.fr)
+    EJP: <%= color_display(EDF.cached_ejp_color_for(@now)) %> / <%= color_display(EDF.cached_ejp_color_for(@now.tomorrow)) %> (period + caching)<br>
+    └ API 1: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %> (api-commerce.edf.fr) <br>
   </footer>
 </body>
 </html>

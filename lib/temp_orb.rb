@@ -6,8 +6,8 @@ module TempOrb
     when 'ejp'
       # Timezone 1h en avance sur la France, pour simplifier la gestion de la fin à 1h (ca passe a minuit)
       now = now.in_time_zone('Europe/London')
-      today = today&.to_i || EDF.ejp_color_for(now)
-      tomorrow = tomorrow&.to_i || EDF.ejp_color_for(now.tomorrow)
+      today = today&.to_i || EDF.cached_ejp_color_for(now)
+      tomorrow = tomorrow&.to_i || EDF.cached_ejp_color_for(now.tomorrow)
       hp = now.hour.between?(EJP_HP_START, EJP_HP_END-1)
       end_of_today = now.change(hour: EJP_HP_END)
       end_of_tomorrow = end_of_today + 1.day
