@@ -5,7 +5,14 @@
       <td><%= device.id.to_s(16).upcase %></td>
       <td><strong><%= device.mode.upcase %></strong> <a href="/devices/<%= device.id %>/change_mode">⇄</a></td>
       <td><%= device.created_at.in_time_zone('Europe/Paris') %></td>
-      <td><%= device.updated_at.in_time_zone('Europe/Paris') %></td>
+      <td>
+        <% if device.updated_at < 1.day.ago %>
+          <span style='color: rgb(<%= COLORS[RED].join(', ') %>);'> ×</span>
+        <% else %>
+          <span style='color: rgb(<%= COLORS[GREEN].join(', ') %>);'>✓</span>
+        <% end %>
+        <%= device.updated_at.in_time_zone('Europe/Paris') %>
+      </td>
     </tr>
   <% end %>
 </table>
