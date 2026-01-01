@@ -14,7 +14,7 @@ module EDF
       color = tempo_color_for(tempo_day, api: TEMPO_APIS[0])
       color = tempo_color_for(tempo_day, api: TEMPO_APIS[1]) if color <= UNKNOWN
       if color > UNKNOWN
-        $cache.write(cache_key, color, expires_in: 2.days)
+        $cache.write(cache_key, color, expires_in: 3.hours)
       end
       color
     end
@@ -47,7 +47,7 @@ module EDF
     else
       color = ejp_color_for(time)
       if color > UNKNOWN
-        $cache.write(cache_key, color, expires_in: 2.days)
+        $cache.write(cache_key, color, expires_in: 3.hours)
       end
       color
     end
