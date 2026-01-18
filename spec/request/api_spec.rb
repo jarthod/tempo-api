@@ -139,11 +139,11 @@ RSpec.describe '/' do
   context "with a device id" do
     it "creates a device if never seen" do
       expect {
-        get '/', id: '123', today: RED, tomorrow: UNKNOWN
+        get '/', id: '123456789012', today: RED, tomorrow: UNKNOWN
         expect(last_response).to be_ok
         expect(json['mode']).to eq('tempo')
       }.to change(Device, :count).by(1)
-      d = Device.find(123)
+      d = Device.find(123456789012)
       expect(d.mode).to eq('tempo')
     end
 
@@ -156,6 +156,16 @@ RSpec.describe '/' do
       }.to change { d.reload.updated_at }
       expect(d.created_at).to eq(1.day.ago) # no change
       expect(d.mode).to eq('ejp') # no change
+    end
+
+    it "supports device IDs as raw HEX" do
+      expect {
+        get '/', id: '569dc4da3bd8', today: RED, tomorrow: UNKNOWN
+        expect(last_response).to be_ok
+        expect(json['mode']).to eq('tempo')
+      }.to change(Device, :count).by(1)
+      d = Device.find(95235612490712)
+      expect(d.mode).to eq('tempo')
     end
   end
 end

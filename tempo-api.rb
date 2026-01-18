@@ -52,6 +52,9 @@ get "/" do
   device_id = params[:id]
   now = Time.now.in_time_zone('Europe/Paris')
   logger.info "[#{now}] New request from #{request.ip} (device_id: #{device_id}, user-agent: #{request.user_agent})"
+  if device_id&.match?(/\A[0-9a-f]{12}\z/) and device_id&.match?(/[a-f]/)
+    device_id = device_id.to_i(16)
+  end
   device = Device.find_or_create_by(id: device_id.to_i) if device_id.to_i > 0
   logger.info "[#{now}] Device #{device.id} (mode: #{device.mode}, created: #{device.created_at}, last_update: #{device.updated_at})" if device
   device&.touch

@@ -2,7 +2,7 @@
   <tr><th>Device ID</th><th>Mode</th><th>First Poll ▾</th><th>Last Poll / Update</th></tr>
   <% Device.order(created_at: :desc).each do |device| %>
     <tr>
-      <td><%= device.id.to_s(16).upcase %></td>
+      <td title="<%= device.id %>"><%= "%012X" % device.id %></td>
       <td><strong><%= device.mode.upcase %></strong> <a href="/devices/<%= device.id %>/change_mode">⇄</a></td>
       <td><%= device.created_at.in_time_zone('Europe/Paris') %></td>
       <td>

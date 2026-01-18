@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@exampledev/new.css@1.1.2/new.min.css">
 </head>
 <body>
-  <header><h1><%= $icon ||= File.read('public/icon.svg') %> TempOrb Admin</h1></header>
+  <header><h1><%= $icon ||= File.read('public/icon.svg') %> TempOrb Admin</h1></header>
   <main><%= yield %></main>
   <footer style="color: #888">
     <div style="float: right"><%= @now %></div>

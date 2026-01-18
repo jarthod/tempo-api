@@ -29,15 +29,15 @@ RSpec.describe '/admin', :request do
       d = Device.create!(id: 255)
       VCR.use_cassette("/admin") do
         visit '/admin'
-        expect(page).to have_content('FF TEMPO ⇄')
+        expect(page).to have_content('0000000000FF TEMPO ⇄')
         expect {
           click_on('⇄')
         }.to change { d.reload.mode }.from('tempo').to('ejp')
-        expect(page).to have_content('FF EJP ⇄')
+        expect(page).to have_content('0000000000FF EJP ⇄')
         expect {
           click_on('⇄')
         }.to change { d.reload.mode }.from('ejp').to('tempo')
-        expect(page).to have_content('FF TEMPO ⇄')
+        expect(page).to have_content('0000000000FF TEMPO ⇄')
       end
     end
   end
