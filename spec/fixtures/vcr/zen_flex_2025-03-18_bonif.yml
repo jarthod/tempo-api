@@ -1,0 +1,74 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-03-18
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - particulier.edf.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Content-Length:
+      - '51'
+      X-Oneagent-Js-Injection:
+      - 'true'
+      Rest-Id:
+      - sumatra4Jo6BUxuAd{6;null;4226ddde-82f4-4b2d-b214-1019193d15b4}
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Xss-Protection:
+      - 1; mode=block
+      X-Content-Type-Options:
+      - nosniff
+      X-Robots-Tag:
+      - noindex
+      Date:
+      - Tue, 10 Mar 2026 14:06:22 GMT
+      Connection:
+      - keep-alive
+      Set-Cookie:
+      - AWSALB=plb/BD7xD9OW+SJ0q2IXgdK5gYZ5cArI8H28NpmvJS63EWhhLesIkEc682rb/W+hNuIsvd+pNQpZUWghYgeychBGMorjDCDI6sZPpGduCzDgV7Nco8hhHqBJq+SW;
+        Expires=Tue, 17 Mar 2026 14:06:22 GMT; Path=/
+      - AWSALBAPP-0=_remove_; Expires=Tue, 17 Mar 2026 14:06:22 GMT; Path=/
+      - AWSALBAPP-1=_remove_; Expires=Tue, 17 Mar 2026 14:06:22 GMT; Path=/
+      - AWSALBAPP-2=_remove_; Expires=Tue, 17 Mar 2026 14:06:22 GMT; Path=/
+      - AWSALBAPP-3=_remove_; Expires=Tue, 17 Mar 2026 14:06:22 GMT; Path=/
+      - AWSALBCORS=plb/BD7xD9OW+SJ0q2IXgdK5gYZ5cArI8H28NpmvJS63EWhhLesIkEc682rb/W+hNuIsvd+pNQpZUWghYgeychBGMorjDCDI6sZPpGduCzDgV7Nco8hhHqBJq+SW;
+        Expires=Tue, 17 Mar 2026 14:06:22 GMT; Path=/; SameSite=None; Secure
+      - _abck=5A6F6D23EF85EADD2CD5398CF32CB41B~-1~YAAQUYkUAkpi7aucAQAAOfkR2A/AqQsHYUhd6MDxj/HEqI9a6pG4fDmUAdwKOX4JQrTKk5ZCo0q5IENSZQ454jDriRuxCeXcIaFWAeLFuq6BZqo7UVegHK+llfbiBBaiDh1Z26O8CogHin9HRPyobr/8EvHJ2b+JQBBXOgomFdhETvAWvzoL7bD0Y+m5YmCTI7JvLtkLVkKgW8gcafyzDkxjnmeOD5jS9R7fmp1vpHjpZGz6uM7qKG7zhw4xBzfRbNmJb/8eH7qyFp2M+CtjnKMDZfAbEHuPsdvF32RC5fiBe5ontknC12zQDOTL4RA5UOFyWSvxWj2QExrgDjFPzSEAgfhXz0/idLSfGM40vWDpI78HE2R/QFpfDplYk1iAdRO6GPP1zOFi//UMhPAQnmjiGlRNp04Futz+cClkc2+bBi+x+eWggnh49WBQ5hQXWA==~-1~-1~-1~-1~-1;
+        Domain=.edf.fr; Path=/; Expires=Wed, 10 Mar 2027 14:06:22 GMT; Max-Age=31536000;
+        Secure
+      - akacd_particulier_edf_fr=3950604381~rv=28~id=9b695e0782122a2cc06bf291e8dfadbd;
+        path=/; Secure; SameSite=None
+      - bm_sz=9056CC538214380F94EA93451A27E892~YAAQUYkUAkti7aucAQAAOfkR2B/DAA/pRAn4hNN143ZjHKkESEJQuXudekO/WSCZzN0C1kHxBJQXjBibChM33JaxeCd7A61EqEo6ohqPFkRlLfb4BmE0jdH3MXqR7dOcUPZOsK49qwWWc30hY9B3wB/2kM3r/2sChKLUDH/gv9TQ4o+Te/H/5/3yKqFG1OKjGcy6sIK71GG+cmux8d+g1qj0nuVmbihD+IoxdtfnglB2PDCDkDXnm1pnEiTZMp7XPJ7T5mYSfLrhyY2kBR3c0e0LfcLvQb54kX89/IoZPgoJ7EHjpqsowfPgrqxBVNw4NHQjB6+d07LTXQ/SvO+nT5uxQ5jTQ555CE0=~3356720~3293764;
+        Domain=.edf.fr; Path=/; Expires=Tue, 10 Mar 2026 18:06:22 GMT; Max-Age=14400
+      - dtCookie=v_4_srv_16_sn_7962F508C77518D817681B67B6395519_perc_100000_ol_0_mul_1_app-3A64035f70b761b2e6_1_rcs-3Acss_0;
+        Path=/; Domain=.edf.fr
+      - visitid=abAlXkgKQjfKKF7X0dTlYQAAACE;Domain=.edf.fr ;path=/;Secure
+      Server-Timing:
+      - ak_p; desc="1773151582315_34900305_2597758463_16904_7633_14_29_-";dur=1
+      - cdn-cache; desc=MISS
+      - dtSInfo;desc="1"
+      - edge; dur=16
+      - origin; dur=154
+      Strict-Transport-Security:
+      - max-age=15768000 ; preload
+    body:
+      encoding: UTF-8
+      string: '{"couleurJourJ":"ZENF_BONIF","couleurJourJ1":"RAS"}'
+  recorded_at: Tue, 10 Mar 2026 14:06:22 GMT
+recorded_with: VCR 6.4.0

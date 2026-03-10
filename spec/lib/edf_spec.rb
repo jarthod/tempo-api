@@ -202,14 +202,18 @@ RSpec.describe EDF do
       expect($cache.read("zen_flex_color/2030-01-01")).to be_nil
     end
 
-    it "returns GOLD_HP for ZENF_BONIF bonus days" do
-      expect(EDF).to receive(:get_json).and_return({'couleurJourJ' => 'ZENF_BONIF'})
-      expect(EDF.cached_zen_flex_color_for(Time.new(2026, 3, 1, 12, 0, 0, "+01:00"))).to eq(GOLD_HP)
+    it "returns GOLD_HP for ZENF_BONIF bonus days (hitting real data)" do
+      VCR.use_cassette("zen_flex 2025-03-18 bonif") do
+        expect(EDF.cached_zen_flex_color_for(Time.new(2025, 3, 18, 12, 0, 0, "+01:00"))).to eq(GOLD_HP)
+      end
+      expect($cache.read("zen_flex_color/2025-03-18")).to eq(GOLD_HP)
     end
 
-    it "returns GOLD_HC for ZENF_BONUS bonus days" do
-      expect(EDF).to receive(:get_json).and_return({'couleurJourJ' => 'ZENF_BONUS'})
-      expect(EDF.cached_zen_flex_color_for(Time.new(2025, 10, 16, 12, 0, 0, "+02:00"))).to eq(GOLD_HC)
+    it "returns GOLD_HC for ZENF_BONUS bonus days (hitting real data)" do
+      VCR.use_cassette("zen_flex 2025-10-16 bonus") do
+        expect(EDF.cached_zen_flex_color_for(Time.new(2025, 10, 16, 12, 0, 0, "+02:00"))).to eq(GOLD_HC)
+      end
+      expect($cache.read("zen_flex_color/2025-10-16")).to eq(GOLD_HC)
     end
 
     it "returns unknown on errors" do
@@ -219,29 +223,29 @@ RSpec.describe EDF do
   end
 
   describe ".zen_flex_color_for" do
-    it "maps RAS to BLUE" do
-      expect(EDF).to receive(:get_json).and_return({'couleurJourJ' => 'RAS'})
-      expect(EDF.zen_flex_color_for(Date.new(2026, 1, 10))).to eq(BLUE)
+    it "maps RAS to BLUE and ZENF_PM to RED" do
+      VCR.use_cassette("zen_flex 2026-01-08 sobriety-eco") do
+        expect(EDF.zen_flex_color_for(Date.new(2026, 1, 9))).to eq(RED)
+        expect(EDF.zen_flex_color_for(Date.new(2026, 1, 10))).to eq(BLUE)
+      end
     end
 
-    it "maps ZENF_PM to RED" do
-      expect(EDF).to receive(:get_json).and_return({'couleurJourJ' => 'ZENF_PM'})
-      expect(EDF.zen_flex_color_for(Date.new(2026, 1, 8))).to eq(RED)
+    it "maps ZENF_BONIF to GOLD_HP (hitting real data)" do
+      VCR.use_cassette("zen_flex 2025-03-18 bonif") do
+        expect(EDF.zen_flex_color_for(Date.new(2025, 3, 18))).to eq(GOLD_HP)
+      end
     end
 
-    it "maps ZENF_BONIF to GOLD_HP" do
-      expect(EDF).to receive(:get_json).and_return({'couleurJourJ' => 'ZENF_BONIF'})
-      expect(EDF.zen_flex_color_for(Date.new(2025, 3, 18))).to eq(GOLD_HP)
-    end
-
-    it "maps ZENF_BONUS to GOLD_HC" do
-      expect(EDF).to receive(:get_json).and_return({'couleurJourJ' => 'ZENF_BONUS'})
-      expect(EDF.zen_flex_color_for(Date.new(2025, 10, 16))).to eq(GOLD_HC)
+    it "maps ZENF_BONUS to GOLD_HC (hitting real data)" do
+      VCR.use_cassette("zen_flex 2025-10-16 bonus") do
+        expect(EDF.zen_flex_color_for(Date.new(2025, 10, 16))).to eq(GOLD_HC)
+      end
     end
 
     it "maps NON_DETERMINE to UNKNOWN" do
-      expect(EDF).to receive(:get_json).and_return({'couleurJourJ' => 'NON_DETERMINE'})
-      expect(EDF.zen_flex_color_for(Date.new(2030, 1, 1))).to eq(UNKNOWN)
+      VCR.use_cassette("zen_flex 2030-01-01 unknown") do
+        expect(EDF.zen_flex_color_for(Date.new(2030, 1, 1))).to eq(UNKNOWN)
+      end
     end
 
     it "returns unknown on errors" do
