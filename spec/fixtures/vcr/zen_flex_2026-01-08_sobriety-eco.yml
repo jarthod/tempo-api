@@ -1,0 +1,99 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-08
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - particulier.edf.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 10 Mar 2026 11:00:00 GMT
+      Content-Length:
+      - '47'
+      Connection:
+      - keep-alive
+    body:
+      encoding: UTF-8
+      string: '{"couleurJourJ":"ZENF_PM","couleurJourJ1":"ZENF_PM"}'
+  recorded_at: Tue, 10 Mar 2026 11:00:00 GMT
+- request:
+    method: get
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-09
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - particulier.edf.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 10 Mar 2026 11:00:00 GMT
+      Content-Length:
+      - '43'
+      Connection:
+      - keep-alive
+    body:
+      encoding: UTF-8
+      string: '{"couleurJourJ":"ZENF_PM","couleurJourJ1":"RAS"}'
+  recorded_at: Tue, 10 Mar 2026 11:00:00 GMT
+- request:
+    method: get
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-10
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - particulier.edf.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 10 Mar 2026 11:00:00 GMT
+      Content-Length:
+      - '39'
+      Connection:
+      - keep-alive
+    body:
+      encoding: UTF-8
+      string: '{"couleurJourJ":"RAS","couleurJourJ1":"RAS"}'
+  recorded_at: Tue, 10 Mar 2026 11:00:00 GMT
+recorded_with: VCR 6.3.1

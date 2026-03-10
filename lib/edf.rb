@@ -2,6 +2,7 @@ $cache = ActiveSupport::Cache::FileStore.new("tmp/cache")
 
 module EDF
   RTE_COLORS = {"BLUE" => 1, "WHITE" => 2, "RED" => 3}
+  ZENFLEX_COLORS = {"RAS" => 1, "ZENF_PM" => 3, "ZENF_BONIF" => 5, "ZENF_BONUS" => 6} # BLUE, RED, GOLD_HP, GOLD_HC
   TEMPO_APIS = ['api-couleur-tempo.fr', 'services-rte.com']
   EJP_OFF_MONTH = 4..10 # Avril - Octobre
 
@@ -75,6 +76,29 @@ module EDF
     end
     logger.debug "> #{statut} → #{code}"
     code
+  end
+
+  def self.cached_zen_flex_color_for time
+    zen_flex_day = time.in_time_zone('Europe/Paris').to_date
+    cache_key = "zen_flex_color/#{zen_flex_day}"
+    if color = $cache.read(cache_key)
+      return color
+    else
+      color = zen_flex_color_for(zen_flex_day)
+      if color > UNKNOWN
+        $cache.write(cache_key, color, expires_in: 3.hours)
+      end
+      color
+    end
+  end
+
+  def self.zen_flex_color_for date
+    # API returns both J and J+1 for a given date; we query with the target date as J
+    # and also try as J-1's J+1 to maximize cache hits from get_json
+    response = get_json("https://particulier.edf.fr/services/rest/opm/getOPMStatut",
+      params: { dateRelevant: date.strftime("%Y-%m-%d") })
+    statut = response['couleurJourJ']
+    ZENFLEX_COLORS.fetch(statut, UNKNOWN)
   end
 
   def self.get_json url, params: nil, headers: {}

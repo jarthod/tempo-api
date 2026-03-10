@@ -1,0 +1,35 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2030-01-01
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - particulier.edf.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 10 Mar 2026 11:00:00 GMT
+      Content-Length:
+      - '55'
+      Connection:
+      - keep-alive
+    body:
+      encoding: UTF-8
+      string: '{"couleurJourJ":"NON_DETERMINE","couleurJourJ1":"NON_DETERMINE"}'
+  recorded_at: Tue, 10 Mar 2026 11:00:00 GMT
+recorded_with: VCR 6.3.1

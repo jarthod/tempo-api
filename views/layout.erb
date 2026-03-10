@@ -18,6 +18,8 @@
     <% end %>
     EJP: <%= color_display(EDF.cached_ejp_color_for(@now)) %> / <%= color_display(EDF.cached_ejp_color_for(@now.tomorrow)) %> (period + caching)<br>
     └ API 1: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %> (api-commerce.edf.fr) <br>
+    ZEN FLEX: <%= color_display(EDF.cached_zen_flex_color_for(@now)) %> / <%= color_display(EDF.cached_zen_flex_color_for(@now.tomorrow)) %> (caching)<br>
+    └ API: <%= color_display(EDF.zen_flex_color_for(@now.to_date)) %> / <%= color_display(EDF.zen_flex_color_for(@now.tomorrow.to_date)) %> (particulier.edf.fr) <br>
   </footer>
 </body>
 </html>

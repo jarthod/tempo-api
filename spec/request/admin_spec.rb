@@ -23,9 +23,10 @@ RSpec.describe '/admin', :request do
       expect(page).to have_content('API 1: ● Blanc / ● Blanc (api-couleur-tempo.fr)')
       expect(page).to have_content('API 2: ● Inconnu / ● Inconnu (services-rte.com)') # does not support looking back in time
       expect(page).to have_content('EJP: ● Vert / ● Rouge')
+      expect(page).to have_content('ZEN FLEX: ● Bleu / ● Bleu')
     end
 
-    it "display devices and can change mode" do
+    it "display devices and can change mode (3-way cycle)" do
       d = Device.create!(id: 255)
       VCR.use_cassette("/admin") do
         visit '/admin'
@@ -36,7 +37,11 @@ RSpec.describe '/admin', :request do
         expect(page).to have_content('0000000000FF EJP ⇄')
         expect {
           click_on('⇄')
-        }.to change { d.reload.mode }.from('ejp').to('tempo')
+        }.to change { d.reload.mode }.from('ejp').to('zen_flex')
+        expect(page).to have_content('0000000000FF ZEN_FLEX ⇄')
+        expect {
+          click_on('⇄')
+        }.to change { d.reload.mode }.from('zen_flex').to('tempo')
         expect(page).to have_content('0000000000FF TEMPO ⇄')
       end
     end

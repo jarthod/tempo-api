@@ -289,4 +289,68 @@ http_interactions:
       encoding: UTF-8
       string: '{"errors":[],"content":{"dateApplicationBorneInf":"2025-02-12","dateApplicationBorneSup":"2025-02-12","dateHeureTraitementActivET":"2025-02-22T15:51:04Z","options":[{"option":"EJP","calendrier":[{"dateApplication":"2025-02-12","statut":"EJP"}]}]}}'
   recorded_at: Tue, 11 Feb 2025 15:00:00 GMT
+- request:
+    method: get
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-02-11
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - particulier.edf.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Feb 2025 15:00:00 GMT
+      Content-Length:
+      - '39'
+      Connection:
+      - keep-alive
+    body:
+      encoding: UTF-8
+      string: '{"couleurJourJ":"RAS","couleurJourJ1":"RAS"}'
+  recorded_at: Tue, 11 Feb 2025 15:00:00 GMT
+- request:
+    method: get
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-02-12
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - application/json
+      User-Agent:
+      - Ruby
+      Host:
+      - particulier.edf.fr
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Feb 2025 15:00:00 GMT
+      Content-Length:
+      - '39'
+      Connection:
+      - keep-alive
+    body:
+      encoding: UTF-8
+      string: '{"couleurJourJ":"RAS","couleurJourJ1":"RAS"}'
+  recorded_at: Tue, 11 Feb 2025 15:00:00 GMT
 recorded_with: VCR 6.3.1

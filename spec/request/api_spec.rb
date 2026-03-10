@@ -136,6 +136,82 @@ RSpec.describe '/' do
     end
   end
 
+  context "in ZEN_FLEX mode" do
+    before do
+      travel_to Time.new(2026, 1, 9, 10, 0, 0, "+01:00") # 10am HP (8-13 range)
+    end
+
+    it "returns expected colors during HP (from params, Sobriété day)" do
+      get '/', mode: 'zen_flex', today: RED, tomorrow: BLUE
+      expect(last_response).to be_ok
+      expect(json['time']).to eq('2026-01-09T09:00:00Z')
+      expect(json['mode']).to eq('zen_flex')
+      # initial: RED (+effect) then BLUE
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}})
+      # at 13:00 → HC darker RED (no effect) then darker BLUE
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T12:00:00Z", "topLEDs"=>{"RGB"=>[127, 0, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}})
+      # at 18:00 → HP RED (+effect) then BLUE
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T17:00:00Z", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}})
+      # at 20:00 → HC darker RED (no effect) then darker BLUE
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T19:00:00Z", "topLEDs"=>{"RGB"=>[127, 0, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}})
+      # at midnight CET (23:00 UTC) → tomorrow BLUE (HC, dark)
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T23:00:00Z", "topLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      # Next sync in 1h+jitter
+      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2026-01-09T10:\d\d:\d\dZ/})
+      # No more data after end of tomorrow (midnight CET = 23:00 UTC)
+      expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2026-01-10T23:00:00Z"})
+    end
+
+    it "returns expected colors during HC (from params, Eco day)" do
+      travel_to Time.new(2026, 1, 10, 15, 0, 0, "+01:00") # 15:00, HC (13-18 range)
+      get '/', mode: 'zen_flex', today: BLUE, tomorrow: UNKNOWN
+      expect(last_response).to be_ok
+      expect(json['time']).to eq('2026-01-10T14:00:00Z')
+      # initial: HC darker BLUE (no effect) then darker UNKNOWN
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      # at 18:00 → HP BLUE (no effect)
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-10T17:00:00Z", "topLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      # at 20:00 → HC darker BLUE
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-10T19:00:00Z", "topLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      # No more data after end of today (tomorrow unknown, midnight CET = 23:00 UTC)
+      expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2026-01-10T23:00:00Z"})
+    end
+
+    it "returns expected colors for GOLD_HP Bonus day (ZENF_BONIF: animation HP, secondary RED)" do
+      get '/', mode: 'zen_flex', today: GOLD_HP, tomorrow: BLUE
+      expect(last_response).to be_ok
+      # initial: GOLD (+effect during HP, secondaryRGB RED) then BLUE
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial",
+        "topLEDs"=>{"RGB"=>[255, 180, 0], "FX"=>"breathingRingHalf", "secondaryRGB"=>[255, 0, 0]},
+        "bottomLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}})
+      # at 13:00 → HC darker GOLD (no effect, secondaryRGB darker RED)
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T12:00:00Z",
+        "topLEDs"=>{"RGB"=>[127, 90, 0], "FX"=>"none", "secondaryRGB"=>[127, 0, 0]},
+        "bottomLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}})
+    end
+
+    it "returns expected colors for GOLD_HC Bonus day (ZENF_BONUS: animation HC, secondary BLUE)" do
+      get '/', mode: 'zen_flex', today: GOLD_HC, tomorrow: BLUE
+      expect(last_response).to be_ok
+      # initial during HP: GOLD (no effect during HP for GOLD_HC, secondaryRGB BLUE)
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial",
+        "topLEDs"=>{"RGB"=>[255, 180, 0], "FX"=>"none", "secondaryRGB"=>[12, 105, 255]},
+        "bottomLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}})
+      # at 13:00 → HC darker GOLD (+effect during HC, secondaryRGB darker BLUE)
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T12:00:00Z",
+        "topLEDs"=>{"RGB"=>[127, 90, 0], "FX"=>"breathingRingHalf", "secondaryRGB"=>[6, 52, 127]},
+        "bottomLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}})
+    end
+
+    it "provides a custom syncAPI at 16h before announce" do
+      travel_to Time.new(2026, 1, 9, 15, 30, 0, "+01:00") # 15:30, before 16h announce
+      get '/', mode: 'zen_flex', today: RED, tomorrow: UNKNOWN
+      expect(last_response).to be_ok
+      # Special next sync at ~16:00 to fetch TOMORROW value
+      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2026-01-09T15:00:\d\dZ/})
+    end
+  end
+
   context "with a device id" do
     it "creates a device if never seen" do
       expect {

@@ -17,15 +17,20 @@ also_reload './lib/*.rb', './helpers/*.rb' if development?
 set :logger, Logger.new(STDOUT)
 
 # https://www.api-couleur-tempo.fr/api/docs?ui=re_doc#tag/JourTempo [inconnu, bleu, blanc, rouge] (+vert pour EJP)
-COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 0, 0], [30, 200, 0]]
-COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert)
-UNKNOWN, BLUE, WHITE, RED, GREEN = 0, 1, 2, 3, 4
+COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 0, 0], [30, 200, 0], [255, 180, 0], [255, 180, 0]]
+COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert Or/HP Or/HC)
+UNKNOWN, BLUE, WHITE, RED, GREEN, GOLD_HP, GOLD_HC = 0, 1, 2, 3, 4, 5, 6
+# GOLD_HP (ZENF_BONIF): bonus réduction conso HP (hiver) → or + rouge, animation HP
+# GOLD_HC (ZENF_BONUS): bonus sur-conso HC (surproduction) → or + bleu, animation HC
+# Both use same gold RGB, but different secondary color & animation timing
 TEMPO_HP_START = 6
 TEMPO_HP_END = 22
 # 07:00 to 01:00 (D+1) in France, but using London timezone to simplify (06:00 - 24:00)
 EJP_HP_START = 6  # 07:00 CET
 EJP_HP_END = 24   # 01:00 D+1 CET
 EJP_ANNOUNCE = 14 # 15:00 CET, time for the next day announce
+ZENFLEX_HP_RANGES = [[8, 13], [18, 20]]
+ZENFLEX_ANNOUNCE = 16 # 16:00 CET, official announce time for J+1
 SYNC_INTERVAL = 1.hour # +jitter
 PASSWORD = ENV['PASSWORD'] || 'test'
 
@@ -78,10 +83,7 @@ end
 get '/devices/:id/change_mode' do
   protected!
   device = Device.find_or_create_by(id: params[:id])
-  if device.mode == 'tempo'
-    device.update(mode: 'ejp')
-  else
-    device.update(mode: 'tempo')
-  end
+  next_mode = { 'tempo' => 'ejp', 'ejp' => 'zen_flex', 'zen_flex' => 'tempo' }
+  device.update(mode: next_mode[device.mode] || 'tempo')
   redirect '/admin'
 end
