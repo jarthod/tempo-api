@@ -64,17 +64,15 @@ module TempOrb
       end_of_today = now.end_of_day + 1.second # midnight = start of next day
       end_of_tomorrow = end_of_today + 1.day
 
-      # GOLD_HP: bonus réduction conso HP → or + rouge, animation HP
-      # GOLD_HC: bonus sur-conso HC → or + bleu, animation HC
-      secondary_today = case today; when GOLD_HP then RED; when GOLD_HC then BLUE; end
-      secondary_tomorrow = case tomorrow; when GOLD_HP then RED; when GOLD_HC then BLUE; end
-      animate_today = today == RED || today == GOLD_HP ? hp : (today == GOLD_HC ? !hp : false)
+      # BONIF: bonus réduction conso HP → or + rouge, animation HP
+      # BONUS: bonus sur-conso HC → or + bleu, animation HC
+      animate_today = today == RED || today == BONIF ? hp : (today == BONUS ? !hp : false)
       fx_today = animate_today ? "breathingRingHalf" : "none"
 
       logger.info "[#{now}] Zen Flex HP: #{hp}, Today: #{COLOR_NAMES[today]} (→ #{end_of_today}), Tomorrow: #{COLOR_NAMES[tomorrow]} (→ #{end_of_tomorrow})"
 
       actions = [
-        updateLEDs(today, tomorrow, fx: fx_today, brightness: (hp ? 1 : 0.5), secondary: secondary_today),
+        updateLEDs(today, tomorrow, fx: fx_today, brightness: (hp ? 1 : 0.5)),
       ]
 
       # Schedule all remaining HP/HC transitions for today
@@ -82,28 +80,28 @@ module TempOrb
         start_time = now.change(hour: hp_start)
         end_time = now.change(hour: hp_end)
         if start_time > now # upcoming HP start
-          fx_hp = (today == RED || today == GOLD_HP) ? "breathingRingHalf" : "none"
-          actions << updateLEDs(today, tomorrow, timing: start_time, fx: fx_hp, secondary: secondary_today)
+          fx_hp = (today == RED || today == BONIF) ? "breathingRingHalf" : "none"
+          actions << updateLEDs(today, tomorrow, timing: start_time, fx: fx_hp)
         end
         if end_time > now # upcoming HC start
-          fx_hc = today == GOLD_HC ? "breathingRingHalf" : "none"
-          actions << updateLEDs(today, tomorrow, timing: end_time, brightness: 0.5, fx: fx_hc, secondary: secondary_today)
+          fx_hc = today == BONUS ? "breathingRingHalf" : "none"
+          actions << updateLEDs(today, tomorrow, timing: end_time, brightness: 0.5, fx: fx_hc)
         end
       end
 
       if tomorrow != UNKNOWN
-        secondary_tmr = case tomorrow; when GOLD_HP then RED; when GOLD_HC then BLUE; end
+        #secondary_tmr = case tomorrow; when BONIF then RED; when BONUS then BLUE; end
         # Midnight: switch to tomorrow's color (HC)
-        fx_midnight = tomorrow == GOLD_HC ? "breathingRingHalf" : "none"
-        actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, brightness: 0.5, fx: fx_midnight, secondary: secondary_tmr)
+        fx_midnight = tomorrow == BONUS ? "breathingRingHalf" : "none"
+        actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, brightness: 0.5, fx: fx_midnight)
         # Tomorrow's HP/HC transitions
         ZENFLEX_HP_RANGES.each do |hp_start, hp_end|
           start_time = end_of_today.change(hour: hp_start)
           end_time = end_of_today.change(hour: hp_end)
-          fx_hp = (tomorrow == RED || tomorrow == GOLD_HP) ? "breathingRingHalf" : "none"
-          fx_hc = tomorrow == GOLD_HC ? "breathingRingHalf" : "none"
-          actions << updateLEDs(tomorrow, UNKNOWN, timing: start_time, fx: fx_hp, secondary: secondary_tmr)
-          actions << updateLEDs(tomorrow, UNKNOWN, timing: end_time, brightness: 0.5, fx: fx_hc, secondary: secondary_tmr)
+          fx_hp = (tomorrow == RED || tomorrow == BONIF) ? "breathingRingHalf" : "none"
+          fx_hc = tomorrow == BONUS ? "breathingRingHalf" : "none"
+          actions << updateLEDs(tomorrow, UNKNOWN, timing: start_time, fx: fx_hp)
+          actions << updateLEDs(tomorrow, UNKNOWN, timing: end_time, brightness: 0.5, fx: fx_hc)
         end
         actions << syncAPI(now + SYNC_INTERVAL + rand(SYNC_INTERVAL))
         actions << error_noData(end_of_tomorrow)
@@ -122,10 +120,17 @@ module TempOrb
 
   private
 
-  def self.updateLEDs today, tomorrow, timing: nil, fx: "none", brightness: 1, secondary: nil
-    top = {RGB: COLORS[today].map { (_1 * brightness).to_i }, FX: fx}
-    top[:secondaryRGB] = COLORS[secondary].map { (_1 * brightness).to_i } if secondary
-    { action: "updateLEDs", timing: timing&.utc&.iso8601 || "initial", topLEDs: top, bottomLEDs: {RGB: COLORS[tomorrow].map { (_1 * brightness).to_i }, FX: "none"}}
+  def self.updateLEDs today, tomorrow, timing: nil, fx: "none", brightness: 1
+    top = {**color_codes(today, brightness:), FX: fx}
+    bottom = {**color_codes(tomorrow, brightness:), FX: "none"}
+    { action: "updateLEDs", timing: timing&.utc&.iso8601 || "initial", topLEDs: top, bottomLEDs: bottom}
+  end
+
+  def self.color_codes code, brightness: 1
+    ajusted = COLORS[code].map { (_1 * brightness).to_i }
+    out = {RGB: ajusted[0..2]}
+    out[:secondaryRGB] = ajusted[3..5] if ajusted.size == 6
+    out
   end
 
   def self.syncAPI time

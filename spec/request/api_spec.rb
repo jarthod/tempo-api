@@ -2,6 +2,7 @@ require 'app_helper'
 
 RSpec.describe '/' do
   let(:json) { JSON.parse(last_response.body) }
+  DIM_COLORS = COLORS.map { |i| i.map { _1 / 2 } }
 
   context "in TEMPO mode" do
     before do
@@ -16,13 +17,13 @@ RSpec.describe '/' do
       expect(json['time']).to eq('2025-02-03T05:00:00Z')
       expect(json['mode']).to eq('tempo')
       # initial: RED (+effect) then WHITE
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[220, 190, 160], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[WHITE], "FX"=>"none"}})
       # at 22:00 → off duty darker RED (no effect) then darker WHITE
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-03T21:00:00Z", "topLEDs"=>{"RGB"=>[127, 0, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[110, 95, 80], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-03T21:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[RED], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>DIM_COLORS[WHITE], "FX"=>"none"}})
       # at 06:00 the next day → WHITE then UNKNOWN
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-04T05:00:00Z", "topLEDs"=>{"RGB"=>[220, 190, 160], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-04T05:00:00Z", "topLEDs"=>{"RGB"=>COLORS[WHITE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 22:00 the next day → dark WHITE then UNKNOWN
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-04T21:00:00Z", "topLEDs"=>{"RGB"=>[110, 95, 80], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-04T21:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[WHITE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # No more data after the next day
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-05T05:00:00Z"})
       # Next sync in 1h+jitter
@@ -34,9 +35,9 @@ RSpec.describe '/' do
       expect(last_response).to be_ok
       expect(json['time']).to eq('2025-02-03T05:00:00Z')
       # initial: BLUE (no effect) then UNKNOWN
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[BLUE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 22:00 → off duty darker BLUE (no effect) then UNKNOWN
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-03T21:00:00Z", "topLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-03T21:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 06:00 the next day → No more data
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-04T05:00:00Z"})
       # Next sync in 1h+jitter
@@ -49,7 +50,7 @@ RSpec.describe '/' do
       expect(last_response).to be_ok
       expect(json['time']).to eq('2025-02-03T21:00:00Z')
       # initial: off duty darker RED (no effect) then UNKNOWN
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[127, 0, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>DIM_COLORS[RED], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 06:00 the next day → No more data
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-04T05:00:00Z"})
       # Next sync in 1h+jitter
@@ -70,9 +71,9 @@ RSpec.describe '/' do
       expect(json['time']).to eq('2025-02-07T00:00:00Z')
       expect(json['mode']).to eq('ejp')
       # initial: off duty darker RED (no effect) then UNDEFINED
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[127, 0, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>DIM_COLORS[RED], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 07:00 → on duty RED (+effect) then UNDEFINED
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-07T06:00:00Z", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-07T06:00:00Z", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # Next sync (quicker) in 30m+jitter (to get the RED if it gets announced earlier)
       expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-07T00:[345]\d:\d\dZ/})
       # No more data after 1am end of day (refresh should bring it before that)
@@ -86,8 +87,8 @@ RSpec.describe '/' do
       expect(json['time']).to eq('2025-04-07T00:00:00Z')
       expect(json['mode']).to eq('ejp')
       # Darker green during night then light green
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[15, 100, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[15, 100, 0], "FX"=>"none"}})
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-04-07T05:00:00Z", "topLEDs"=>{"RGB"=>[30, 200, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[30, 200, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>DIM_COLORS[GREEN], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>DIM_COLORS[GREEN], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-04-07T05:00:00Z", "topLEDs"=>{"RGB"=>COLORS[GREEN], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[GREEN], "FX"=>"none"}})
       expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-04-07T01:\d\d:\d\dZ/})
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-04-08T23:00:00Z"})
     end
@@ -98,11 +99,11 @@ RSpec.describe '/' do
       expect(last_response).to be_ok
       expect(json['time']).to eq('2025-02-07T16:00:00Z')
       # initial: on duty GREEN (no effect) then RED
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[30, 200, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[GREEN], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"none"}})
       # at 01:00 → off duty RED (no effect) then UNDEFINED
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-08T00:00:00Z", "topLEDs"=>{"RGB"=>[127, 0, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-08T00:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[RED], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 07:00 → on duty RED (+effect) then UNDEFINED
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-08T06:00:00Z", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-08T06:00:00Z", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # No more data after 1am end of tomorrow
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-09T00:00:00Z"})
       # Next sync in 1h+jitter
@@ -115,7 +116,7 @@ RSpec.describe '/' do
       expect(last_response).to be_ok
       expect(json['time']).to eq('2025-02-07T13:30:00Z')
       # initial: on duty RED (+effect) then UNDEFINED
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # Special next sync at 15:00 +small jitter to fetch TOMORROW value
       expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-07T14:00:\d\dZ/})
       # No more data after 1am end of day (refresh should bring it before that)
@@ -128,7 +129,7 @@ RSpec.describe '/' do
       expect(last_response).to be_ok
       expect(json['time']).to eq('2025-02-07T14:00:00Z')
       # initial: on duty RED (+effect) then UNDEFINED
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # Next sync (quicker) in 30m+jitter (to get the late color)
       expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-07T14:[345]\d:\d\dZ/})
       # No more data after 1am end of day (refresh should bring it before that)
@@ -147,15 +148,15 @@ RSpec.describe '/' do
       expect(json['time']).to eq('2026-01-09T09:00:00Z')
       expect(json['mode']).to eq('zen_flex')
       # initial: RED (+effect) then BLUE
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[BLUE], "FX"=>"none"}})
       # at 13:00 → HC darker RED (no effect) then darker BLUE
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T12:00:00Z", "topLEDs"=>{"RGB"=>[127, 0, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T12:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[RED], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}})
       # at 18:00 → HP RED (+effect) then BLUE
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T17:00:00Z", "topLEDs"=>{"RGB"=>[255, 0, 0], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T17:00:00Z", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[BLUE], "FX"=>"none"}})
       # at 20:00 → HC darker RED (no effect) then darker BLUE
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T19:00:00Z", "topLEDs"=>{"RGB"=>[127, 0, 0], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T19:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[RED], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}})
       # at midnight CET (23:00 UTC) → tomorrow BLUE (HC, dark)
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T23:00:00Z", "topLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T23:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # Next sync in 1h+jitter
       expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2026-01-09T10:\d\d:\d\dZ/})
       # No more data after end of tomorrow (midnight CET = 23:00 UTC)
@@ -168,39 +169,39 @@ RSpec.describe '/' do
       expect(last_response).to be_ok
       expect(json['time']).to eq('2026-01-10T14:00:00Z')
       # initial: HC darker BLUE (no effect) then darker UNKNOWN
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 18:00 → HP BLUE (no effect)
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-10T17:00:00Z", "topLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-10T17:00:00Z", "topLEDs"=>{"RGB"=>COLORS[BLUE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 20:00 → HC darker BLUE
-      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-10T19:00:00Z", "topLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>[0, 0, 0], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-10T19:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # No more data after end of today (tomorrow unknown, midnight CET = 23:00 UTC)
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2026-01-10T23:00:00Z"})
     end
 
-    it "returns expected colors for GOLD_HP Bonus day (ZENF_BONIF: animation HP, secondary RED)" do
-      get '/', mode: 'zen_flex', today: GOLD_HP, tomorrow: BLUE
+    it "returns expected colors for BONIF Bonus day (ZENF_BONIF: animation HP, secondary RED)" do
+      get '/', mode: 'zen_flex', today: BONIF, tomorrow: BLUE
       expect(last_response).to be_ok
       # initial: GOLD (+effect during HP, secondaryRGB RED) then BLUE
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial",
-        "topLEDs"=>{"RGB"=>[255, 180, 0], "FX"=>"breathingRingHalf", "secondaryRGB"=>[255, 0, 0]},
-        "bottomLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}})
+        "topLEDs"=>{"RGB"=>COLORS[BONIF][0..2], "FX"=>"breathingRingHalf", "secondaryRGB"=>COLORS[RED]},
+        "bottomLEDs"=>{"RGB"=>COLORS[BLUE], "FX"=>"none"}})
       # at 13:00 → HC darker GOLD (no effect, secondaryRGB darker RED)
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T12:00:00Z",
-        "topLEDs"=>{"RGB"=>[127, 90, 0], "FX"=>"none", "secondaryRGB"=>[127, 0, 0]},
-        "bottomLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}})
+        "topLEDs"=>{"RGB"=>DIM_COLORS[BONIF][0..2], "FX"=>"none", "secondaryRGB"=>DIM_COLORS[RED]},
+        "bottomLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}})
     end
 
-    it "returns expected colors for GOLD_HC Bonus day (ZENF_BONUS: animation HC, secondary BLUE)" do
-      get '/', mode: 'zen_flex', today: GOLD_HC, tomorrow: BLUE
+    it "returns expected colors for BONUS Bonus day (ZENF_BONUS: animation HC, secondary BLUE)" do
+      get '/', mode: 'zen_flex', today: BONUS, tomorrow: BLUE
       expect(last_response).to be_ok
-      # initial during HP: GOLD (no effect during HP for GOLD_HC, secondaryRGB BLUE)
+      # initial during HP: GOLD (no effect during HP for BONUS, secondaryRGB BLUE)
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial",
-        "topLEDs"=>{"RGB"=>[255, 180, 0], "FX"=>"none", "secondaryRGB"=>[12, 105, 255]},
-        "bottomLEDs"=>{"RGB"=>[12, 105, 255], "FX"=>"none"}})
+        "topLEDs"=>{"RGB"=>COLORS[BONUS][0..2], "FX"=>"none", "secondaryRGB"=>COLORS[BONUS][3..5]},
+        "bottomLEDs"=>{"RGB"=>COLORS[BLUE], "FX"=>"none"}})
       # at 13:00 → HC darker GOLD (+effect during HC, secondaryRGB darker BLUE)
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2026-01-09T12:00:00Z",
-        "topLEDs"=>{"RGB"=>[127, 90, 0], "FX"=>"breathingRingHalf", "secondaryRGB"=>[6, 52, 127]},
-        "bottomLEDs"=>{"RGB"=>[6, 52, 127], "FX"=>"none"}})
+        "topLEDs"=>{"RGB"=>DIM_COLORS[BONUS][0..2], "FX"=>"breathingRingHalf", "secondaryRGB"=>DIM_COLORS[BONUS][3..5]},
+        "bottomLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}})
     end
 
     it "provides a custom syncAPI at 16h before announce" do

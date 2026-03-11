@@ -16,13 +16,20 @@ also_reload './lib/*.rb', './helpers/*.rb' if development?
 
 set :logger, Logger.new(STDOUT)
 
-# https://www.api-couleur-tempo.fr/api/docs?ui=re_doc#tag/JourTempo [inconnu, bleu, blanc, rouge] (+vert pour EJP)
-COLORS = [[0, 0, 0], [12, 105, 255], [220, 190, 160], [255, 0, 0], [30, 200, 0], [255, 180, 0], [255, 180, 0]]
-COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert Or/HP Or/HC)
-UNKNOWN, BLUE, WHITE, RED, GREEN, GOLD_HP, GOLD_HC = 0, 1, 2, 3, 4, 5, 6
-# GOLD_HP (ZENF_BONIF): bonus réduction conso HP (hiver) → or + rouge, animation HP
-# GOLD_HC (ZENF_BONUS): bonus sur-conso HC (surproduction) → or + bleu, animation HC
-# Both use same gold RGB, but different secondary color & animation timing
+#   R    G    B  /  R    G   B (primary / secondary)
+COLORS = [
+  [  0,   0,   0],                # Black
+  [ 12, 105, 255],                # Blue
+  [255, 180, 100],                # White
+  [255,   0,   0],                # Red
+  [ 30, 200,   0],                # Green
+  [255, 180, 100, 255,   0,   0], # White/Red
+  [255, 165,  80,   9,  84, 204]  # White/Blue
+]
+COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert Bonus/HP Bonus/HC)
+UNKNOWN, BLUE, WHITE, RED, GREEN, BONIF, BONUS = 0, 1, 2, 3, 4, 5, 6
+# BONIF (Zen Flex): bonus réduction conso HP (hiver) → blanc + rouge, animation HP
+# BONUS (Zen Flex): bonus sur-conso HC (surproduction) → blanc + bleu, animation HC
 TEMPO_HP_START = 6
 TEMPO_HP_END = 22
 # 07:00 to 01:00 (D+1) in France, but using London timezone to simplify (06:00 - 24:00)
@@ -49,14 +56,19 @@ helpers do
   def color_display index
     color = COLORS[index]
     color = [100, 100, 100] if index == 0 # black would not be readable on the admin background
-    "<span style='color: rgb(#{color.join(', ')});'>● #{COLOR_NAMES[index]}</span>"
+    if color.size == 6
+      "<span style='color: rgb(#{color[0..2].join(', ')});'>◖</span>" +
+      "<span style='color: rgb(#{color[3..5].join(', ')});'>◗ #{COLOR_NAMES[index]}</span>"
+    else
+      "<span style='color: rgb(#{color.join(', ')});'>● #{COLOR_NAMES[index]}</span>"
+    end
   end
 end
 
 get "/" do
   device_id = params[:id]
   now = Time.now.in_time_zone('Europe/Paris')
-  logger.info "[#{now}] New request from #{request.ip} (device_id: #{device_id}, user-agent: #{request.user_agent})"
+  logger.info "[#{now}] New request from #{request.ip} (device_id: #{device_id}, user-agent: #{request.user_agent}, hostname: #{request.server_name})"
   if device_id&.match?(/\A[0-9a-f]{12}\z/) and device_id&.match?(/[a-f]/)
     device_id = device_id.to_i(16)
   end

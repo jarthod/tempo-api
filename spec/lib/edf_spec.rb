@@ -202,18 +202,18 @@ RSpec.describe EDF do
       expect($cache.read("zen_flex_color/2030-01-01")).to be_nil
     end
 
-    it "returns GOLD_HP for ZENF_BONIF bonus days (hitting real data)" do
+    it "returns BONIF for ZENF_BONIF bonus days (hitting real data)" do
       VCR.use_cassette("zen_flex 2025-03-18 bonif") do
-        expect(EDF.cached_zen_flex_color_for(Time.new(2025, 3, 18, 12, 0, 0, "+01:00"))).to eq(GOLD_HP)
+        expect(EDF.cached_zen_flex_color_for(Time.new(2025, 3, 18, 12, 0, 0, "+01:00"))).to eq(BONIF)
       end
-      expect($cache.read("zen_flex_color/2025-03-18")).to eq(GOLD_HP)
+      expect($cache.read("zen_flex_color/2025-03-18")).to eq(BONIF)
     end
 
-    it "returns GOLD_HC for ZENF_BONUS bonus days (hitting real data)" do
+    it "returns BONUS for ZENF_BONUS bonus days (hitting real data)" do
       VCR.use_cassette("zen_flex 2025-10-16 bonus") do
-        expect(EDF.cached_zen_flex_color_for(Time.new(2025, 10, 16, 12, 0, 0, "+02:00"))).to eq(GOLD_HC)
+        expect(EDF.cached_zen_flex_color_for(Time.new(2025, 10, 16, 12, 0, 0, "+02:00"))).to eq(BONUS)
       end
-      expect($cache.read("zen_flex_color/2025-10-16")).to eq(GOLD_HC)
+      expect($cache.read("zen_flex_color/2025-10-16")).to eq(BONUS)
     end
 
     it "returns unknown on errors" do
@@ -230,15 +230,15 @@ RSpec.describe EDF do
       end
     end
 
-    it "maps ZENF_BONIF to GOLD_HP (hitting real data)" do
+    it "maps ZENF_BONIF to BONIF (hitting real data)" do
       VCR.use_cassette("zen_flex 2025-03-18 bonif") do
-        expect(EDF.zen_flex_color_for(Date.new(2025, 3, 18))).to eq(GOLD_HP)
+        expect(EDF.zen_flex_color_for(Date.new(2025, 3, 18))).to eq(BONIF)
       end
     end
 
-    it "maps ZENF_BONUS to GOLD_HC (hitting real data)" do
+    it "maps ZENF_BONUS to BONUS (hitting real data)" do
       VCR.use_cassette("zen_flex 2025-10-16 bonus") do
-        expect(EDF.zen_flex_color_for(Date.new(2025, 10, 16))).to eq(GOLD_HC)
+        expect(EDF.zen_flex_color_for(Date.new(2025, 10, 16))).to eq(BONUS)
       end
     end
 
