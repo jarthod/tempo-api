@@ -35,7 +35,7 @@ SYNC_INTERVAL = 1.hour # +jitter
 PASSWORD = ENV['PASSWORD'] || 'test'
 
 database = ENV["RACK_ENV"] == "test" ? ":memory:" : "data/db.sqlite3"
-set :database, { adapter: "sqlite3", database: database }
+set :database, { adapter: "sqlite3", database: database } unless ENV["DATABASE_URL"].present?
 
 helpers do
   def protected!
