@@ -23,7 +23,7 @@ RSpec.describe '/admin', :request do
       expect(page).to have_content('API 1: ● Blanc / ● Blanc (api-couleur-tempo.fr)')
       expect(page).to have_content('API 2: ● Inconnu / ● Inconnu (services-rte.com)') # does not support looking back in time
       expect(page).to have_content('EJP: ● Vert / ● Rouge')
-      expect(page).to have_content('ZEN FLEX: ● Bleu / ● Bleu')
+      expect(page).to have_content('ZEN FLEX: ● Blanc / ● Blanc')
     end
 
     it "display devices and can change mode (3-way cycle)" do

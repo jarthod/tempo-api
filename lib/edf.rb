@@ -2,7 +2,7 @@ $cache = ActiveSupport::Cache::FileStore.new("tmp/cache")
 
 module EDF
   RTE_COLORS = {"BLUE" => 1, "WHITE" => 2, "RED" => 3}
-  ZENFLEX_COLORS = {"RAS" => 1, "ZENF_PM" => 3, "ZENF_BONIF" => 5, "ZENF_BONUS" => 6}
+  ZENFLEX_COLORS = {"RAS" => 2, "ZENF_PM" => 3, "ZENF_BONIF" => 5, "ZENF_BONUS" => 6}
   TEMPO_APIS = ['api-couleur-tempo.fr', 'services-rte.com']
   EJP_OFF_MONTH = 4..10 # Avril - Octobre
 
