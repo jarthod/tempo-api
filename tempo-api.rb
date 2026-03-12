@@ -20,11 +20,11 @@ set :logger, Logger.new(STDOUT)
 COLORS = [
   [  0,   0,   0],                # Black
   [ 12, 105, 255],                # Blue
-  [255, 180, 100],                # White
+  [220, 172, 120],                # White
   [255,   0,   0],                # Red
   [ 30, 200,   0],                # Green
-  [255, 180, 100, 255,   0,   0], # White/Red
-  [255, 165,  80,   9,  84, 204]  # White/Blue
+  [220, 172, 120, 255,   0,   0], # White/Red
+  [220, 172, 120,   9,  84, 204]  # White/Blue
 ]
 COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert Bonus/HP Bonus/HC)
 UNKNOWN, BLUE, WHITE, RED, GREEN, BONIF, BONUS = 0, 1, 2, 3, 4, 5, 6
