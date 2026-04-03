@@ -10,6 +10,7 @@ gem "activesupport"
 gem "sinatra-activerecord"
 gem "activerecord"
 gem "sqlite3"
+gem "RubySunrise"
 
 group :development, :test do
   gem "rack-test", require: false

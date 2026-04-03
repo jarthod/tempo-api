@@ -38,6 +38,8 @@ EJP_HP_END = 24   # 01:00 D+1 CET
 EJP_ANNOUNCE = 14 # 15:00 CET, time for the next day announce
 ZENFLEX_HP_RANGES = [[8, 13], [18, 20]]
 ZENFLEX_ANNOUNCE = 16 # 16:00 CET, official announce time for J+1
+LATITUDE = BigDecimal("48.8566")  # Paris
+LONGITUDE = BigDecimal("2.3522")
 SYNC_INTERVAL = 1.hour # +jitter
 PASSWORD = ENV['PASSWORD'] || 'test'
 

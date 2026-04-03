@@ -1,4 +1,5 @@
 require_relative "edf"
+require "solareventcalculator"
 
 module TempOrb
   def self.actions_for now, mode:, today: nil, tomorrow: nil
@@ -57,52 +58,62 @@ module TempOrb
       now = now.in_time_zone('Europe/Paris')
       today = today&.to_i || EDF.cached_zen_flex_color_for(now)
       tomorrow = tomorrow&.to_i || EDF.cached_zen_flex_color_for(now.tomorrow)
+      sunrise_today, sunset_today = sun_times(now.to_date)
       hp = ZENFLEX_HP_RANGES.any? { |s, e| now.hour.between?(s, e-1) }
-      # Next HP/HC transition
-      next_transition = ZENFLEX_HP_RANGES.map { |s, e| [now.change(hour: s), now.change(hour: e)] }.flatten
-        .sort.find { _1 > now }
+      night = now >= sunset_today || now < sunrise_today
       end_of_today = now.end_of_day + 1.second # midnight = start of next day
       end_of_tomorrow = end_of_today + 1.day
 
       # BONIF: bonus réduction conso HP → or + rouge, animation HP
       # BONUS: bonus sur-conso HC → or + bleu, animation HC
-      animate_today = today == RED || today == BONIF ? hp : (today == BONUS ? !hp : false)
-      fx_today = animate_today ? "breathingRingHalf" : "none"
+      fx_hc = today == BONUS ? "breathingRingHalf" : "none"
+      fx_hp = (today == RED || today == BONIF) ? "breathingRingHalf" : "none"
 
       logger.info "[#{now}] Zen Flex HP: #{hp}, Today: #{COLOR_NAMES[today]} (→ #{end_of_today}), Tomorrow: #{COLOR_NAMES[tomorrow]} (→ #{end_of_tomorrow})"
 
       actions = [
-        updateLEDs(today, tomorrow, fx: fx_today, brightness: (hp ? 1 : 0.5)),
+        updateLEDs(today, tomorrow, fx: (hp ? fx_hp : fx_hc), brightness: (night ? 0.5 : 1)),
       ]
 
-      # Schedule all remaining HP/HC transitions for today
+      # HP/HC transitions: HP always bright, HC dim if after sunset/before sunrise
       ZENFLEX_HP_RANGES.each do |hp_start, hp_end|
         start_time = now.change(hour: hp_start)
         end_time = now.change(hour: hp_end)
-        if start_time > now # upcoming HP start
-          fx_hp = (today == RED || today == BONIF) ? "breathingRingHalf" : "none"
+        if start_time > now # upcoming HP start → always bright
           actions << updateLEDs(today, tomorrow, timing: start_time, fx: fx_hp)
         end
         if end_time > now # upcoming HC start
-          fx_hc = today == BONUS ? "breathingRingHalf" : "none"
-          actions << updateLEDs(today, tomorrow, timing: end_time, brightness: 0.5, fx: fx_hc)
+          hc_night = end_time >= sunset_today || end_time < sunrise_today
+          actions << updateLEDs(today, tomorrow, timing: end_time, fx: fx_hc, brightness: (hc_night ? 0.5 : 1))
         end
       end
 
+      # Sunset dimming / sunrise brightening (clamped by sun_times to night HC window)
+      if sunset_today > now
+        actions << updateLEDs(today, tomorrow, timing: sunset_today, brightness: 0.5, fx: fx_hc)
+      end
+      if sunrise_today > now
+        actions << updateLEDs(today, tomorrow, timing: sunrise_today, fx: fx_hc)
+      end
+
       if tomorrow != UNKNOWN
-        #secondary_tmr = case tomorrow; when BONIF then RED; when BONUS then BLUE; end
-        # Midnight: switch to tomorrow's color (HC)
-        fx_midnight = tomorrow == BONUS ? "breathingRingHalf" : "none"
-        actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, brightness: 0.5, fx: fx_midnight)
+        fx_hc_tmr = tomorrow == BONUS ? "breathingRingHalf" : "none"
+        fx_hp_tmr = (tomorrow == RED || tomorrow == BONIF) ? "breathingRingHalf" : "none"
+        sunrise_tmr, sunset_tmr = sun_times(now.to_date + 1)
+        # Midnight: switch to tomorrow's color (night → dim)
+        actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, brightness: 0.5, fx: fx_hc_tmr)
+        # Sunrise tomorrow → bright (clamped to night HC window)
+        actions << updateLEDs(tomorrow, UNKNOWN, timing: sunrise_tmr, fx: fx_hc_tmr)
         # Tomorrow's HP/HC transitions
         ZENFLEX_HP_RANGES.each do |hp_start, hp_end|
           start_time = end_of_today.change(hour: hp_start)
           end_time = end_of_today.change(hour: hp_end)
-          fx_hp = (tomorrow == RED || tomorrow == BONIF) ? "breathingRingHalf" : "none"
-          fx_hc = tomorrow == BONUS ? "breathingRingHalf" : "none"
-          actions << updateLEDs(tomorrow, UNKNOWN, timing: start_time, fx: fx_hp)
-          actions << updateLEDs(tomorrow, UNKNOWN, timing: end_time, brightness: 0.5, fx: fx_hc)
+          actions << updateLEDs(tomorrow, UNKNOWN, timing: start_time, fx: fx_hp_tmr)
+          hc_night = end_time >= sunset_tmr || end_time < sunrise_tmr
+          actions << updateLEDs(tomorrow, UNKNOWN, timing: end_time, fx: fx_hc_tmr, brightness: (hc_night ? 0.5 : 1))
         end
+        # Sunset tomorrow → dim (clamped to night HC window)
+        actions << updateLEDs(tomorrow, UNKNOWN, timing: sunset_tmr, brightness: 0.5, fx: fx_hc_tmr)
         actions << syncAPI(now + SYNC_INTERVAL + rand(SYNC_INTERVAL))
         actions << error_noData(end_of_tomorrow)
       else
@@ -139,6 +150,16 @@ module TempOrb
 
   def self.error_noData time
     { action: "error_noData", timing: time.utc.iso8601 }
+  end
+
+  def self.sun_times(date, min: 20, max: 8)
+    calc = SolarEventCalculator.new(date, LATITUDE, LONGITUDE)
+    sunrise = calc.compute_official_sunrise('Europe/Paris').to_time.in_time_zone('Europe/Paris')
+    sunset = calc.compute_official_sunset('Europe/Paris').to_time.in_time_zone('Europe/Paris')
+    # Clamp: sunset no earlier than min (last HP end), sunrise no later than max (first HP start)
+    sunset = [sunset, sunset.change(hour: min, min: 0)].max
+    sunrise = [sunrise, sunrise.change(hour: max, min: 0)].min
+    [sunrise, sunset]
   end
 
   def self.logger = Sinatra::Application.logger
