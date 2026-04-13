@@ -94,10 +94,9 @@ get '/admin' do
   erb :admin, layout: :layout
 end
 
-get '/devices/:id/change_mode' do
+post '/devices/:id/change_mode' do
   protected!
   device = Device.find_or_create_by(id: params[:id])
-  next_mode = { 'tempo' => 'ejp', 'ejp' => 'zen_flex', 'zen_flex' => 'tempo' }
-  device.update(mode: next_mode[device.mode] || 'tempo')
+  device.update(mode: params[:mode]) if %w[tempo ejp zen_flex].include?(params[:mode])
   redirect '/admin'
 end

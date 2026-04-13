@@ -3,7 +3,16 @@
   <% Device.order(created_at: :desc).each do |device| %>
     <tr>
       <td title="<%= device.id %>"><%= "%012X" % device.id %></td>
-      <td><strong><%= device.mode.upcase %></strong> <a href="/devices/<%= device.id %>/change_mode">⇄</a></td>
+      <td>
+        <form action="/devices/<%= device.id %>/change_mode" method="post" style="display:inline">
+          <select name="mode" onchange="this.form.submit()">
+            <% %w[tempo ejp zen_flex].each do |m| %>
+              <option value="<%= m %>" <%= 'selected' if device.mode == m %>><%= m.upcase %></option>
+            <% end %>
+          </select>
+          <button type="submit" style="display:none">Apply</button>
+        </form>
+      </td>
       <td><%= device.created_at.in_time_zone('Europe/Paris') %></td>
       <td>
         <% if device.updated_at < 1.day.ago %>

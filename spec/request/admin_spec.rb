@@ -26,23 +26,27 @@ RSpec.describe '/admin', :request do
       expect(page).to have_content('ZEN FLEX: ● Blanc / ● Blanc')
     end
 
-    it "display devices and can change mode (3-way cycle)" do
+    it "display devices and can change mode via select" do
       d = Device.create!(id: 255)
       VCR.use_cassette("/admin") do
         visit '/admin'
-        expect(page).to have_content('0000000000FF TEMPO ⇄')
+        expect(page).to have_content('0000000000FF')
+        expect(page).to have_select('mode', selected: 'TEMPO')
         expect {
-          click_on('⇄')
+          select 'EJP', from: 'mode'
+          find('button[type=submit]', visible: :all).click
         }.to change { d.reload.mode }.from('tempo').to('ejp')
-        expect(page).to have_content('0000000000FF EJP ⇄')
+        expect(page).to have_select('mode', selected: 'EJP')
         expect {
-          click_on('⇄')
+          select 'ZEN_FLEX', from: 'mode'
+          find('button[type=submit]', visible: :all).click
         }.to change { d.reload.mode }.from('ejp').to('zen_flex')
-        expect(page).to have_content('0000000000FF ZEN_FLEX ⇄')
+        expect(page).to have_select('mode', selected: 'ZEN_FLEX')
         expect {
-          click_on('⇄')
+          select 'TEMPO', from: 'mode'
+          find('button[type=submit]', visible: :all).click
         }.to change { d.reload.mode }.from('zen_flex').to('tempo')
-        expect(page).to have_content('0000000000FF TEMPO ⇄')
+        expect(page).to have_select('mode', selected: 'TEMPO')
       end
     end
   end
