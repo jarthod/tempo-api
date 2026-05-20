@@ -23,11 +23,12 @@ COLORS = [
   [220, 172, 120],                # White
   [255,   0,   0],                # Red
   [ 30, 200,   0],                # Green
+  [ 30, 255, 180],                # Turquoise blue
   [220, 172, 120, 255,   0,   0], # White/Red
-  [220, 172, 120,   9,  84, 204]  # White/Blue
+  [220, 172, 120,  24, 204, 144]  # White/Turquoise
 ]
-COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert Bonus/HP Bonus/HC)
-UNKNOWN, BLUE, WHITE, RED, GREEN, BONIF, BONUS = 0, 1, 2, 3, 4, 5, 6
+COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert Turquoise Bonus/HP Bonus/HC)
+UNKNOWN, BLUE, WHITE, RED, GREEN, TURQUOISE, BONIF, BONUS = 0, 1, 2, 3, 4, 5, 6, 7
 # BONIF (Zen Flex): bonus réduction conso HP (hiver) → blanc + rouge, animation HP
 # BONUS (Zen Flex): bonus sur-conso HC (surproduction) → blanc + bleu, animation HC
 TEMPO_HP_START = 6
