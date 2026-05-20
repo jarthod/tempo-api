@@ -185,12 +185,12 @@ RSpec.describe EDF do
         time += 1.day
         expect(EDF.cached_zen_flex_color_for(time)).to eq(RED) # ZENF_PM
         time += 1.day
-        expect(EDF.cached_zen_flex_color_for(time)).to eq(WHITE) # RAS
+        expect(EDF.cached_zen_flex_color_for(time)).to eq(TURQUOISE) # RAS
       end
       # entries are cached
       expect($cache.read("zen_flex_color/2026-01-08")).to eq(RED)
       expect($cache.read("zen_flex_color/2026-01-09")).to eq(RED)
-      expect($cache.read("zen_flex_color/2026-01-10")).to eq(WHITE)
+      expect($cache.read("zen_flex_color/2026-01-10")).to eq(TURQUOISE)
     end
 
     it "returns unknown for the future (no cache)" do
@@ -223,10 +223,10 @@ RSpec.describe EDF do
   end
 
   describe ".zen_flex_color_for" do
-    it "maps RAS to WHITE and ZENF_PM to RED" do
+    it "maps RAS to TURQUOISE and ZENF_PM to RED" do
       VCR.use_cassette("zen_flex 2026-01-08 sobriety-eco") do
         expect(EDF.zen_flex_color_for(Date.new(2026, 1, 9))).to eq(RED)
-        expect(EDF.zen_flex_color_for(Date.new(2026, 1, 10))).to eq(WHITE)
+        expect(EDF.zen_flex_color_for(Date.new(2026, 1, 10))).to eq(TURQUOISE)
       end
     end
 
