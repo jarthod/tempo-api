@@ -15,7 +15,7 @@ RSpec.describe '/admin', :request do
       page.driver.browser.basic_authorize 'admin', 'test'
    end
 
-    it "display current colors" do
+    it "display current colors with inline manual override selects" do
       VCR.use_cassette("/admin") do
         visit '/admin'
       end
@@ -34,19 +34,56 @@ RSpec.describe '/admin', :request do
         expect(page).to have_select('mode', selected: 'TEMPO')
         expect {
           select 'EJP', from: 'mode'
-          find('button[type=submit]', visible: :all).click
+          find('form[action*="/devices/"] button[type=submit]', visible: :all).click
         }.to change { d.reload.mode }.from('tempo').to('ejp')
         expect(page).to have_select('mode', selected: 'EJP')
         expect {
-          select 'ZEN_FLEX', from: 'mode'
-          find('button[type=submit]', visible: :all).click
+          select 'ZEN FLEX', from: 'mode'
+          find('form[action*="/devices/"] button[type=submit]', visible: :all).click
         }.to change { d.reload.mode }.from('ejp').to('zen_flex')
-        expect(page).to have_select('mode', selected: 'ZEN_FLEX')
+        expect(page).to have_select('mode', selected: 'ZEN FLEX')
         expect {
           select 'TEMPO', from: 'mode'
-          find('button[type=submit]', visible: :all).click
+          find('form[action*="/devices/"] button[type=submit]', visible: :all).click
         }.to change { d.reload.mode }.from('zen_flex').to('tempo')
         expect(page).to have_select('mode', selected: 'TEMPO')
+      end
+    end
+
+    it "allows setting and clearing manual overrides inline" do
+      VCR.use_cassette("/admin") do
+        visit '/admin'
+
+        today_date = Date.new(2025, 2, 11)
+
+        zen_today_form = all("form[action='/admin/manual_override']").find do |form|
+          form.has_field?('contract', with: 'zen_flex', type: :hidden) &&
+          form.has_field?('target', with: 'today', type: :hidden)
+        end
+
+        expect {
+          within(zen_today_form) do
+            select 'Rouge', from: 'color'
+            find('button[type=submit]', visible: :all).click
+          end
+        }.to change { Contract.manual_color_for('zen_flex', today_date) }.from(nil).to(RED)
+
+        expect(page).to have_content('ZEN FLEX: ● Rouge / ● Eco')
+
+        # Reset to Auto
+        zen_today_form = all("form[action='/admin/manual_override']").find do |form|
+          form.has_field?('contract', with: 'zen_flex', type: :hidden) &&
+          form.has_field?('target', with: 'today', type: :hidden)
+        end
+
+        expect {
+          within(zen_today_form) do
+            select 'Auto', from: 'color'
+            find('button[type=submit]', visible: :all).click
+          end
+        }.to change { Contract.manual_color_for('zen_flex', today_date) }.from(RED).to(nil)
+
+        expect(page).to have_content('ZEN FLEX: ● Eco / ● Eco')
       end
     end
   end

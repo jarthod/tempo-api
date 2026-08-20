@@ -266,4 +266,21 @@ RSpec.describe '/' do
       expect(d.mode).to eq('tempo')
     end
   end
+
+  context "with manual override set" do
+    before do
+      travel_to Time.new(2026, 1, 9, 10, 0, 0, "+01:00")
+    end
+
+    it "uses the overridden color when serving device requests" do
+      Contract.set_manual_override('zen_flex', Date.new(2026, 1, 9), BONUS)
+      Contract.set_manual_override('zen_flex', Date.new(2026, 1, 10), BONIF)
+
+      get '/', mode: 'zen_flex'
+      expect(last_response).to be_ok
+      # Initial topLEDs should use BONUS color (gold with secondary blue)
+      expect(json['actions']).to include(hash_including("action" => "updateLEDs", "timing" => "initial",
+        "topLEDs" => {"RGB" => COLORS[BONUS][0..2], "FX" => "none", "secondaryRGB" => COLORS[BONUS][3..5]}))
+    end
+  end
 end

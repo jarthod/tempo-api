@@ -6,8 +6,8 @@
       <td>
         <form action="/devices/<%= device.id %>/change_mode" method="post" style="display:inline">
           <select name="mode" onchange="this.form.submit()">
-            <% %w[tempo ejp zen_flex].each do |m| %>
-              <option value="<%= m %>" <%= 'selected' if device.mode == m %>><%= m.upcase %></option>
+            <% Contract::MODES.each do |m| %>
+              <option value="<%= m %>" <%= 'selected' if device.mode == m %>><%= Contract.name_for(m).upcase %></option>
             <% end %>
           </select>
           <button type="submit" style="display:none">Apply</button>

@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby '3.3.5'
+ruby '~> 3.3.5'
 
 gem "sinatra"
 gem "sinatra-contrib"
@@ -11,6 +11,7 @@ gem "sinatra-activerecord"
 gem "activerecord"
 gem "sqlite3"
 gem "RubySunrise"
+gem "tzinfo-data", platforms: :windows
 
 group :development, :test do
   gem "rack-test", require: false

@@ -1,4 +1,4 @@
-$cache = ActiveSupport::Cache::FileStore.new("tmp/cache")
+$cache = ENV['RACK_ENV'] == 'test' ? ActiveSupport::Cache::MemoryStore.new : ActiveSupport::Cache::FileStore.new("tmp/cache")
 
 module EDF
   RTE_COLORS = {"BLUE" => 1, "WHITE" => 2, "RED" => 3}
@@ -8,6 +8,9 @@ module EDF
 
   def self.cached_tempo_color_for time
     tempo_day = (time - TEMPO_HP_START.hours).to_date
+    if defined?(Contract) && (manual = Contract.manual_color_for('tempo', tempo_day))
+      return manual
+    end
     cache_key = "tempo_color/#{tempo_day}"
     if color = $cache.read(cache_key)
       return color
@@ -40,6 +43,9 @@ module EDF
   def self.cached_ejp_color_for time
     time = time.in_time_zone('Europe/London')
     ejp_day = time.to_date
+    if defined?(Contract) && (manual = Contract.manual_color_for('ejp', ejp_day))
+      return manual
+    end
     cache_key = "ejp_color/#{ejp_day}"
     if color = $cache.read(cache_key)
       return color
@@ -80,6 +86,9 @@ module EDF
 
   def self.cached_zen_flex_color_for time
     zen_flex_day = time.in_time_zone('Europe/Paris').to_date
+    if defined?(Contract) && (manual = Contract.manual_color_for('zen_flex', zen_flex_day))
+      return manual
+    end
     cache_key = "zen_flex_color/#{zen_flex_day}"
     if color = $cache.read(cache_key)
       return color
