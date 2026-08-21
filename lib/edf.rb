@@ -6,21 +6,6 @@ module EDF
   TEMPO_APIS = ['api-couleur-tempo.fr', 'services-rte.com']
   EJP_OFF_MONTH = 4..10 # Avril - Octobre
 
-  def self.cached_tempo_color_for time_or_date
-    tempo_day = time_or_date.is_a?(Date) ? time_or_date : (time_or_date - TEMPO_HP_START.hours).to_date
-    cache_key = "tempo_color/#{tempo_day}"
-    if color = $cache.read(cache_key)
-      return color
-    else
-      color = tempo_color_for(tempo_day, api: TEMPO_APIS[0])
-      color = tempo_color_for(tempo_day, api: TEMPO_APIS[1]) if color <= UNKNOWN
-      if color > UNKNOWN
-        $cache.write(cache_key, color, expires_in: 3.hours)
-      end
-      color
-    end
-  end
-
   def self.tempo_color_for tempo_day, api:
     case api
     when 'services-rte.com'
@@ -34,22 +19,6 @@ module EDF
       end
     when 'api-couleur-tempo.fr'
       get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").fetch('codeJour', UNKNOWN)
-    end
-  end
-
-  def self.cached_ejp_color_for time_or_date
-    ejp_day = time_or_date.is_a?(Date) ? time_or_date : time_or_date.in_time_zone('Europe/London').to_date
-    cache_key = "ejp_color/#{ejp_day}"
-    if color = $cache.read(cache_key)
-      return color
-    elsif EJP_OFF_MONTH === ejp_day.month # NO EJP, always green
-      return GREEN
-    else
-      color = ejp_color_for(time_or_date)
-      if color > UNKNOWN
-        $cache.write(cache_key, color, expires_in: 3.hours)
-      end
-      color
     end
   end
 
@@ -75,20 +44,6 @@ module EDF
     end
     logger.debug "> #{statut} → #{code}"
     code
-  end
-
-  def self.cached_zen_flex_color_for time_or_date
-    zen_flex_day = time_or_date.is_a?(Date) ? time_or_date : time_or_date.in_time_zone('Europe/Paris').to_date
-    cache_key = "zen_flex_color/#{zen_flex_day}"
-    if color = $cache.read(cache_key)
-      return color
-    else
-      color = zen_flex_color_for(zen_flex_day)
-      if color > UNKNOWN
-        $cache.write(cache_key, color, expires_in: 3.hours)
-      end
-      color
-    end
   end
 
   def self.zen_flex_color_for date

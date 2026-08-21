@@ -74,7 +74,7 @@ helpers do
   def manual_select contract, target
     time = target == 'tomorrow' ? @now.tomorrow : @now
     date = Contract.day_for(contract, time)
-    val = $cache.read("#{contract}_color/#{date}")
+    val = $cache.read(Contract.cache_key(contract, date))
 
     options = ["<option value='0' #{'selected' if val.nil?}>Auto</option>"]
     Contract.colors_for(contract).each do |c|
@@ -115,7 +115,7 @@ end
 get '/admin' do
   protected!
   @now = Time.now.in_time_zone('Europe/Paris')
-  @tempo_day = (@now - TEMPO_HP_START.hours).to_date
+  @tempo_day = Contract.day_for('tempo', @now)
   erb :admin, layout: :layout
 end
 

@@ -19,15 +19,15 @@
   <main><%= yield %></main>
   <footer>
     <div style="float: right"><%= @now %></div>
-    TEMPO: <%= color_display(EDF.cached_tempo_color_for(@now)) %> / <%= color_display(EDF.cached_tempo_color_for(@now.tomorrow)) %> (auto + caching)<br>
+    TEMPO: <%= color_display(Contract.color_for('tempo', @now)) %> / <%= color_display(Contract.color_for('tempo', @now.tomorrow)) %> (auto + caching)<br>
     <% EDF::TEMPO_APIS.each_with_index do |api, i| %>
       ├ API <%= i+1 %>: <%= color_display(EDF.tempo_color_for(@tempo_day, api: api)) %> / <%= color_display(EDF.tempo_color_for(@tempo_day.tomorrow, api: api)) %> (<%= api %>) <br>
     <% end %>
     └ Manuel: <%= manual_select('tempo', 'today') %> / <%= manual_select('tempo', 'tomorrow') %><br>
-    EJP: <%= color_display(EDF.cached_ejp_color_for(@now)) %> / <%= color_display(EDF.cached_ejp_color_for(@now.tomorrow)) %> (period + caching)<br>
+    EJP: <%= color_display(Contract.color_for('ejp', @now)) %> / <%= color_display(Contract.color_for('ejp', @now.tomorrow)) %> (period + caching)<br>
     ├ API 1: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %> (api-commerce.edf.fr) <br>
     └ Manuel: <%= manual_select('ejp', 'today') %> / <%= manual_select('ejp', 'tomorrow') %><br>
-    ZEN FLEX: <%= color_display(EDF.cached_zen_flex_color_for(@now)) %> / <%= color_display(EDF.cached_zen_flex_color_for(@now.tomorrow)) %> (caching)<br>
+    ZEN FLEX: <%= color_display(Contract.color_for('zen_flex', @now)) %> / <%= color_display(Contract.color_for('zen_flex', @now.tomorrow)) %> (caching)<br>
     ├ API: <%= color_display(EDF.zen_flex_color_for(@now.to_date)) %> / <%= color_display(EDF.zen_flex_color_for(@now.tomorrow.to_date)) %> (particulier.edf.fr) <br>
     └ Manuel: <%= manual_select('zen_flex', 'today') %> / <%= manual_select('zen_flex', 'tomorrow') %><br>
   </footer>
