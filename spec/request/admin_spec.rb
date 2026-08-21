@@ -61,16 +61,17 @@ RSpec.describe '/admin', :request do
           form.has_field?('target', with: 'today', type: :hidden)
         end
 
+        # Initial page load already fills the cache via API (ECO); override to Rouge
         expect {
           within(zen_today_form) do
             select 'Rouge', from: 'color'
             find('button[type=submit]', visible: :all).click
           end
-        }.to change { Contract.manual_color_for('zen_flex', today_date) }.from(nil).to(RED)
+        }.to change { $cache.read("zen_flex_color/#{today_date}") }.from(ECO).to(RED)
 
         expect(page).to have_content('ZEN FLEX: ● Rouge / ● Eco')
 
-        # Reset to Auto
+        # Reset to Auto: clears the override then the page re-fetches from API (ECO via VCR)
         zen_today_form = all("form[action='/admin/manual_override']").find do |form|
           form.has_field?('contract', with: 'zen_flex', type: :hidden) &&
           form.has_field?('target', with: 'today', type: :hidden)
@@ -81,7 +82,7 @@ RSpec.describe '/admin', :request do
             select 'Auto', from: 'color'
             find('button[type=submit]', visible: :all).click
           end
-        }.to change { Contract.manual_color_for('zen_flex', today_date) }.from(RED).to(nil)
+        }.to change { $cache.read("zen_flex_color/#{today_date}") }.from(RED).to(ECO)
 
         expect(page).to have_content('ZEN FLEX: ● Eco / ● Eco')
       end

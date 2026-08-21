@@ -1,4 +1,4 @@
-﻿require 'app_helper'
+require 'app_helper'
 
 RSpec.describe Contract do
   describe "MODES" do
@@ -45,29 +45,27 @@ RSpec.describe Contract do
   describe "manual overrides" do
     let(:date) { Date.new(2026, 8, 20) }
 
-    it "sets, reads, and clears manual overrides" do
-      expect(Contract.manual_color_for('zen_flex', date)).to be_nil
+    it "sets, reads from cache, and clears manual overrides" do
+      expect($cache.read("zen_flex_color/#{date}")).to be_nil
 
       Contract.set_manual_override('zen_flex', date, RED)
-      expect(Contract.manual_color_for('zen_flex', date)).to eq(RED)
-      expect(ManualOverride.find_by(contract: 'zen_flex', date: date).color).to eq(RED)
+      expect($cache.read("zen_flex_color/#{date}")).to eq(RED)
 
       # Update override
       Contract.set_manual_override('zen_flex', date, BONUS)
-      expect(Contract.manual_color_for('zen_flex', date)).to eq(BONUS)
+      expect($cache.read("zen_flex_color/#{date}")).to eq(BONUS)
 
       # Clear override (Auto / 0)
       Contract.set_manual_override('zen_flex', date, 0)
-      expect(Contract.manual_color_for('zen_flex', date)).to be_nil
-      expect(ManualOverride.find_by(contract: 'zen_flex', date: date)).to be_nil
+      expect($cache.read("zen_flex_color/#{date}")).to be_nil
     end
 
-    it "prioritizes manual override in .color_for" do
+    it "returns cached override in .color_for without hitting external API" do
       time = Time.new(2026, 8, 20, 10, 0, 0, "+02:00")
       Contract.set_manual_override('zen_flex', date, BONIF)
 
-      # Should return BONIF without calling EDF API
-      expect(EDF).not_to receive(:cached_zen_flex_color_for)
+      # When cached, EDF.zen_flex_color_for is not called
+      expect(EDF).not_to receive(:zen_flex_color_for)
       expect(Contract.color_for('zen_flex', time)).to eq(BONIF)
     end
   end

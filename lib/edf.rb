@@ -6,11 +6,8 @@ module EDF
   TEMPO_APIS = ['api-couleur-tempo.fr', 'services-rte.com']
   EJP_OFF_MONTH = 4..10 # Avril - Octobre
 
-  def self.cached_tempo_color_for time
-    tempo_day = (time - TEMPO_HP_START.hours).to_date
-    if defined?(Contract) && (manual = Contract.manual_color_for('tempo', tempo_day))
-      return manual
-    end
+  def self.cached_tempo_color_for time_or_date
+    tempo_day = time_or_date.is_a?(Date) ? time_or_date : (time_or_date - TEMPO_HP_START.hours).to_date
     cache_key = "tempo_color/#{tempo_day}"
     if color = $cache.read(cache_key)
       return color
@@ -40,19 +37,15 @@ module EDF
     end
   end
 
-  def self.cached_ejp_color_for time
-    time = time.in_time_zone('Europe/London')
-    ejp_day = time.to_date
-    if defined?(Contract) && (manual = Contract.manual_color_for('ejp', ejp_day))
-      return manual
-    end
+  def self.cached_ejp_color_for time_or_date
+    ejp_day = time_or_date.is_a?(Date) ? time_or_date : time_or_date.in_time_zone('Europe/London').to_date
     cache_key = "ejp_color/#{ejp_day}"
     if color = $cache.read(cache_key)
       return color
     elsif EJP_OFF_MONTH === ejp_day.month # NO EJP, always green
       return GREEN
     else
-      color = ejp_color_for(time)
+      color = ejp_color_for(time_or_date)
       if color > UNKNOWN
         $cache.write(cache_key, color, expires_in: 3.hours)
       end
@@ -84,11 +77,8 @@ module EDF
     code
   end
 
-  def self.cached_zen_flex_color_for time
-    zen_flex_day = time.in_time_zone('Europe/Paris').to_date
-    if defined?(Contract) && (manual = Contract.manual_color_for('zen_flex', zen_flex_day))
-      return manual
-    end
+  def self.cached_zen_flex_color_for time_or_date
+    zen_flex_day = time_or_date.is_a?(Date) ? time_or_date : time_or_date.in_time_zone('Europe/Paris').to_date
     cache_key = "zen_flex_color/#{zen_flex_day}"
     if color = $cache.read(cache_key)
       return color

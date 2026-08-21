@@ -10,20 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_181500) do
+ActiveRecord::Schema[8.1].define(version: 2025_02_11_160645) do
   create_table "devices", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "mode", default: "tempo", null: false
     t.text "settings"
     t.datetime "updated_at", null: false
-  end
-
-  create_table "manual_overrides", force: :cascade do |t|
-    t.integer "color", null: false
-    t.string "contract", null: false
-    t.datetime "created_at", null: false
-    t.date "date", null: false
-    t.datetime "updated_at", null: false
-    t.index ["contract", "date"], name: "index_manual_overrides_on_contract_and_date", unique: true
   end
 end

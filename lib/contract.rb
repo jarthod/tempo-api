@@ -37,28 +37,19 @@ module Contract
     calculator ? calculator.call(time) : time.to_date
   end
 
-  def self.manual_color_for(mode, date)
-    ManualOverride.find_by(contract: mode.to_s, date: date)&.color
-  end
-
   def self.set_manual_override(mode, date, color)
+    key = "#{mode}_color/#{date}"
     color_int = color.to_i
     if color_int <= UNKNOWN
-      ManualOverride.where(contract: mode.to_s, date: date).destroy_all
+      $cache.delete(key)
     else
-      override = ManualOverride.find_or_initialize_by(contract: mode.to_s, date: date)
-      override.update!(color: color_int)
+      $cache.write(key, color_int, expires_in: 48.hours)
     end
-    # Purge cache for this day
-    $cache.delete("#{mode}_color/#{date}")
   end
 
-  def self.color_for(mode, time)
-    date = day_for(mode, time)
-    if (manual = manual_color_for(mode, date))
-      return manual
-    end
+  def self.color_for(mode, time_or_date)
+    date = time_or_date.is_a?(Date) ? time_or_date : day_for(mode, time_or_date)
     fetcher = CONFIG.dig(mode.to_s, :fetcher)
-    fetcher ? fetcher.call(time) : UNKNOWN
+    fetcher ? fetcher.call(date) : UNKNOWN
   end
 end

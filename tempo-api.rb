@@ -43,7 +43,6 @@ LONGITUDE = BigDecimal("2.3522")
 SYNC_INTERVAL = 1.hour # +jitter
 PASSWORD = ENV['PASSWORD'] || 'test'
 
-require_relative "lib/manual_override"
 require_relative "lib/contract"
 require_relative "lib/temp_orb"
 require_relative "lib/device"
@@ -75,7 +74,7 @@ helpers do
   def manual_select contract, target
     time = target == 'tomorrow' ? @now.tomorrow : @now
     date = Contract.day_for(contract, time)
-    val = Contract.manual_color_for(contract, date)
+    val = $cache.read("#{contract}_color/#{date}")
 
     options = ["<option value='0' #{'selected' if val.nil?}>Auto</option>"]
     Contract.colors_for(contract).each do |c|
