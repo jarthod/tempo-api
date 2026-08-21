@@ -7,12 +7,10 @@ require 'sinatra/reloader' if development?
 require 'sinatra/custom_logger'
 require 'logger'
 require 'net/http'
+require 'bigdecimal'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/integer'
 require 'sinatra/activerecord'
-require_relative "lib/temp_orb"
-require_relative "lib/device"
-also_reload './lib/*.rb', './helpers/*.rb' if development?
 
 set :logger, Logger.new(STDOUT)
 
@@ -45,6 +43,11 @@ LONGITUDE = BigDecimal("2.3522")
 SYNC_INTERVAL = 1.hour # +jitter
 PASSWORD = ENV['PASSWORD'] || 'test'
 
+require_relative "lib/contract"
+require_relative "lib/temp_orb"
+require_relative "lib/device"
+also_reload './lib/*.rb', './helpers/*.rb' if development?
+
 database = ENV["RACK_ENV"] == "test" ? ":memory:" : "data/db.sqlite3"
 set :database, { adapter: "sqlite3", database: database } unless ENV["DATABASE_URL"].present?
 
@@ -66,6 +69,26 @@ helpers do
     else
       "<span style='color: rgb(#{color.join(', ')});'>● #{COLOR_NAMES[index]}</span>"
     end
+  end
+
+  def manual_select contract, target
+    time = target == 'tomorrow' ? @now.tomorrow : @now
+    date = Contract.day_for(contract, time)
+    val = $cache.read(Contract.cache_key(contract, date))
+
+    options = ["<option value='0' #{'selected' if val.nil?}>Auto</option>"]
+    Contract.colors_for(contract).each do |c|
+      options << "<option value='#{c}' #{'selected' if val == c}>#{COLOR_NAMES[c]}</option>"
+    end
+
+    "<form action='/admin/manual_override' method='post' style='display:inline'>" +
+      "<input type='hidden' name='contract' value='#{contract}'>" +
+      "<input type='hidden' name='target' value='#{target}'>" +
+      "<select name='color' onchange='this.form.submit()' style='padding: 2px 4px; font-size: 0.9em;'>" +
+      options.join +
+      "</select>" +
+      "<button type='submit' style='display:none'>Apply</button>" +
+    "</form>"
   end
 end
 
@@ -92,13 +115,25 @@ end
 get '/admin' do
   protected!
   @now = Time.now.in_time_zone('Europe/Paris')
-  @tempo_day = (@now - TEMPO_HP_START.hours).to_date
+  @tempo_day = Contract.day_for('tempo', @now)
   erb :admin, layout: :layout
 end
 
 post '/devices/:id/change_mode' do
   protected!
   device = Device.find_or_create_by(id: params[:id])
-  device.update(mode: params[:mode]) if %w[tempo ejp zen_flex].include?(params[:mode])
+  device.update(mode: params[:mode]) if Contract::MODES.include?(params[:mode])
+  redirect '/admin'
+end
+
+post '/admin/manual_override' do
+  protected!
+  contract = params[:contract]
+  if Contract::MODES.include?(contract)
+    now = Time.now.in_time_zone('Europe/Paris')
+    target_time = params[:target] == 'tomorrow' ? now.tomorrow : now
+    target_date = Contract.day_for(contract, target_time)
+    Contract.set_manual_override(contract, target_date, params[:color])
+  end
   redirect '/admin'
 end

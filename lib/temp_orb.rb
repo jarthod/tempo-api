@@ -1,4 +1,5 @@
 require_relative "edf"
+require_relative "contract"
 require "solareventcalculator"
 
 module TempOrb
@@ -7,8 +8,8 @@ module TempOrb
     when 'ejp'
       # Timezone 1h en avance sur la France, pour simplifier la gestion de la fin à 1h (ca passe a minuit)
       now = now.in_time_zone('Europe/London')
-      today = today&.to_i || EDF.cached_ejp_color_for(now)
-      tomorrow = tomorrow&.to_i || EDF.cached_ejp_color_for(now.tomorrow)
+      today = today&.to_i || Contract.color_for('ejp', now)
+      tomorrow = tomorrow&.to_i || Contract.color_for('ejp', now.tomorrow)
       hp = now.hour.between?(EJP_HP_START, EJP_HP_END-1)
       end_of_today = now.change(hour: EJP_HP_END)
       end_of_tomorrow = end_of_today + 1.day
@@ -34,8 +35,8 @@ module TempOrb
       end
     when 'tempo'
       now = now.in_time_zone('Europe/Paris')
-      today = today&.to_i || EDF.cached_tempo_color_for(now)
-      tomorrow = tomorrow&.to_i || EDF.cached_tempo_color_for(now.tomorrow)
+      today = today&.to_i || Contract.color_for('tempo', now)
+      tomorrow = tomorrow&.to_i || Contract.color_for('tempo', now.tomorrow)
       hp = now.hour.between?(TEMPO_HP_START, TEMPO_HP_END-1)
       end_of_today = (now.hour < TEMPO_HP_START ? now.change(hour: TEMPO_HP_START) : now.tomorrow.change(hour: TEMPO_HP_START))
       end_of_tomorrow = end_of_today + 1.day
@@ -56,8 +57,8 @@ module TempOrb
       end
     when 'zen_flex'
       now = now.in_time_zone('Europe/Paris')
-      today = today&.to_i || EDF.cached_zen_flex_color_for(now)
-      tomorrow = tomorrow&.to_i || EDF.cached_zen_flex_color_for(now.tomorrow)
+      today = today&.to_i || Contract.color_for('zen_flex', now)
+      tomorrow = tomorrow&.to_i || Contract.color_for('zen_flex', now.tomorrow)
       hp = ZENFLEX_HP_RANGES.any? { |s, e| now.hour.between?(s, e-1) }
       end_of_today = now.end_of_day + 1.second # midnight = start of next day
       end_of_tomorrow = end_of_today + 1.day

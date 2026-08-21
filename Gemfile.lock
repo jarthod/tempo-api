@@ -56,6 +56,8 @@ GEM
     mustermann (3.0.4)
       ruby2_keywords (~> 0.0.1)
     nio4r (2.7.5)
+    nokogiri (1.19.1-x64-mingw-ucrt)
+      racc (~> 1.4)
     nokogiri (1.19.1-x86_64-linux-gnu)
       racc (~> 1.4)
     prism (1.9.0)
@@ -109,11 +111,14 @@ GEM
       rack-protection (= 4.2.1)
       sinatra (= 4.2.1)
       tilt (~> 2.0)
+    sqlite3 (2.9.1-x64-mingw-ucrt)
     sqlite3 (2.9.1-x86_64-linux-gnu)
     tilt (2.7.0)
     timeout (0.6.1)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
+    tzinfo-data (1.2026.3)
+      tzinfo (>= 1.0.0)
     uri (1.1.1)
     vcr (6.4.0)
     webmock (3.26.1)
@@ -124,6 +129,7 @@ GEM
       nokogiri (~> 1.8)
 
 PLATFORMS
+  x64-mingw-ucrt
   x86_64-linux
 
 DEPENDENCIES
@@ -140,6 +146,7 @@ DEPENDENCIES
   sinatra-activerecord
   sinatra-contrib
   sqlite3
+  tzinfo-data
   vcr
   webmock
 
