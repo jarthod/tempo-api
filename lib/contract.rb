@@ -70,7 +70,7 @@ module Contract
       return color
     end
 
-    color = config[:fetch].call(time, date)
+    color = config[:fetch].call(time, date) || UNKNOWN
     $cache.write(key, color, expires_in: 3.hours) if color > UNKNOWN
     color
   end

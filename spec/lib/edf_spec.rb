@@ -44,6 +44,13 @@ RSpec.describe EDF do
         expect(EDF).to receive(:get_json).and_return(error: "test")
         expect(EDF.tempo_color_for(Time.now, api: 'services-rte.com')).to eq(UNKNOWN)
       end
+
+      it "returns unknown (not nil) when the day is marked non-fallback but has no known color" do
+        expect(EDF).to receive(:get_json).and_return(
+          'values' => { '2025-02-22-fallback' => 'false', '2025-02-22' => nil }
+        )
+        expect(EDF.tempo_color_for(Date.new(2025, 2, 22), api: 'services-rte.com')).to eq(UNKNOWN)
+      end
     end
   end
 

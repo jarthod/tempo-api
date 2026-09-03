@@ -11,14 +11,14 @@ module EDF
     when 'services-rte.com'
       values = get_json("https://www.services-rte.com/cms/open_data/v1/tempoLight")['values']
       if values&.dig("#{tempo_day}-fallback") == 'false'
-        RTE_COLORS[values[tempo_day.to_s]]
+        RTE_COLORS.fetch(values[tempo_day.to_s], UNKNOWN)
       elsif values&.dig("#{tempo_day}-fallback") == 'true'
         UNKNOWN
       else
         UNKNOWN # other type of errors
       end
     when 'api-couleur-tempo.fr'
-      get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}").fetch('codeJour', UNKNOWN)
+      get_json("https://www.api-couleur-tempo.fr/api/jourTempo/#{tempo_day}")['codeJour'] || UNKNOWN
     end
   end
 
@@ -77,8 +77,9 @@ module EDF
           logger.info "> Response #{response.code} #{response.body}"
           JSON.parse(response.body)
         else
-          logger.warn "> Error #{response.code} #{response.body}"
-          { error: "#{response.code} #{response.body}" }
+          body = response.body.to_s.truncate(500)
+          logger.warn "> Error #{response.code} #{body}"
+          { error: "#{response.code} #{body}" }
         end
       rescue StandardError => error
         logger.warn "> #{error.class}: #{error.message}"
