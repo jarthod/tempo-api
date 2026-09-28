@@ -50,7 +50,7 @@ module EDF
     # API returns both J and J+1 for a given date; we query with the target date as J
     # and also try as J-1's J+1 to maximize cache hits from get_json
     response = get_json("https://particulier.edf.fr/services/rest/opm/getOPMStatut",
-      params: { dateRelevant: date.strftime("%Y-%m-%d") })
+      params: { dateRelevant: date.strftime("%Y-%m-%d"), urlPlaasmaCommerce: "https://api-commerce.edf.fr" })
     statut = response['couleurJourJ']
     ZENFLEX_COLORS.fetch(statut, UNKNOWN)
   end
