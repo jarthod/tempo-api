@@ -4,6 +4,9 @@ require "solareventcalculator"
 
 module TempOrb
   def self.actions_for now, mode:, today: nil, tomorrow: nil
+    # reduced sync interval to get the color if announced earlier
+    sync_at = now + SYNC_INTERVAL + rand(SYNC_INTERVAL/2)
+    fast_sync_at = now + FAST_SYNC_INTERVAL + rand(FAST_SYNC_INTERVAL/2)
     case mode
     when 'ejp'
       # Timezone 1h en avance sur la France, pour simplifier la gestion de la fin à 1h (ca passe a minuit)
@@ -23,11 +26,9 @@ module TempOrb
       if tomorrow != UNKNOWN
         actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, brightness: 0.5)
         actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: EJP_HP_START), fx: (tomorrow == 3 ? "breathingRingHalf" : "none"))
-        actions << syncAPI(now + SYNC_INTERVAL + rand(SYNC_INTERVAL))
+        actions << syncAPI(sync_at)
         actions << error_noData(end_of_tomorrow)
       else
-        # reduced sync interval to get the RED if announced earlier
-        fast_sync_at = now + SYNC_INTERVAL/2 + rand(SYNC_INTERVAL/2)
         # or 15h max when the color is announced
         announce_at = now.change(hour: EJP_ANNOUNCE) + rand(1.minute) if now.hour < EJP_ANNOUNCE
         actions << syncAPI([fast_sync_at, announce_at].compact.min)
@@ -43,7 +44,6 @@ module TempOrb
       logger.info "[#{now}] Tempo HP: #{hp}, Today: #{COLOR_NAMES[today]} (→ #{end_of_today}), Tomorrow: #{COLOR_NAMES[tomorrow]} (→ #{end_of_tomorrow})"
       actions = [
         updateLEDs(today, tomorrow, fx: (hp && today == 3 ? "breathingRingHalf" : "none"), brightness: (hp ? 1 : 0.5)),
-        syncAPI(now + SYNC_INTERVAL + rand(SYNC_INTERVAL)),
       ]
       if hp
         actions << updateLEDs(today, tomorrow, timing: now.change(hour: TEMPO_HP_END), brightness: 0.5)
@@ -52,8 +52,10 @@ module TempOrb
         actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, fx: (tomorrow == 3 ? "breathingRingHalf" : "none"))
         actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today.change(hour: TEMPO_HP_END), brightness: 0.5)
         actions << error_noData(end_of_tomorrow)
+        actions << syncAPI(sync_at)
       else
         actions << error_noData(end_of_today)
+        actions << syncAPI(fast_sync_at)
       end
     when 'zen_flex'
       now = now.in_time_zone('Europe/Paris')
@@ -91,10 +93,9 @@ module TempOrb
           actions << updateLEDs(tomorrow, UNKNOWN, timing: start_time, fx: fx_hp_tmr)
           actions << updateLEDs(tomorrow, UNKNOWN, timing: end_time, fx: fx_hc_tmr)
         end
-        actions << syncAPI(now + SYNC_INTERVAL + rand(SYNC_INTERVAL))
+        actions << syncAPI(sync_at)
         actions << error_noData(end_of_tomorrow)
       else
-        fast_sync_at = now + SYNC_INTERVAL/2 + rand(SYNC_INTERVAL/2)
         announce_at = now.change(hour: ZENFLEX_ANNOUNCE) + rand(1.minute) if now.hour < ZENFLEX_ANNOUNCE
         actions << syncAPI([fast_sync_at, announce_at].compact.min)
         actions << error_noData(end_of_today)

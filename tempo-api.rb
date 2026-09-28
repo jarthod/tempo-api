@@ -41,6 +41,7 @@ ZENFLEX_ANNOUNCE = 16 # 16:00 CET, official announce time for J+1
 LATITUDE = BigDecimal("48.8566")  # Paris
 LONGITUDE = BigDecimal("2.3522")
 SYNC_INTERVAL = 1.hour # +jitter
+FAST_SYNC_INTERVAL = 15.minutes # when data is not available yet
 PASSWORD = ENV['PASSWORD'] || 'test'
 
 require_relative "lib/contract"

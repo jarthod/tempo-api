@@ -40,8 +40,8 @@ RSpec.describe '/' do
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-03T21:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[BLUE], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 06:00 the next day → No more data
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-04T05:00:00Z"})
-      # Next sync in 1h+jitter
-      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-03T06:\d\d:\d\dZ/})
+      # Next sync (quicker) in 15m+jitter (to get tomorrow's color)
+      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-03T05:[12]\d:\d\dZ/})
     end
 
     it "returns expected colors during HC (from params)" do
@@ -53,8 +53,8 @@ RSpec.describe '/' do
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>DIM_COLORS[RED], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 06:00 the next day → No more data
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-04T05:00:00Z"})
-      # Next sync in 1h+jitter
-      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-03T22:\d\d:\d\dZ/})
+      # Next sync (quicker) in 15m+jitter (to get tomorrow's color)
+      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-03T21:[12]\d:\d\dZ/})
     end
   end
 
@@ -74,8 +74,8 @@ RSpec.describe '/' do
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>DIM_COLORS[RED], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # at 07:00 → on duty RED (+effect) then UNDEFINED
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"2025-02-07T06:00:00Z", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
-      # Next sync (quicker) in 30m+jitter (to get the RED if it gets announced earlier)
-      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-07T00:[345]\d:\d\dZ/})
+      # Next sync (quicker) in 15m+jitter (to get the RED if it gets announced earlier)
+      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-07T00:[12]\d:\d\dZ/})
       # No more data after 1am end of day (refresh should bring it before that)
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-08T00:00:00Z"})
     end
@@ -111,10 +111,10 @@ RSpec.describe '/' do
     end
 
     it "provides a custom syncAPI at 3pm before announce" do
-      travel 13.hours + 30.minutes # moving from 01:00 to 14:30
+      travel 13.hours + 50.minutes # moving from 01:00 to 14:50
       get '/', mode: 'ejp', today: RED, tomorrow: UNKNOWN
       expect(last_response).to be_ok
-      expect(json['time']).to eq('2025-02-07T13:30:00Z')
+      expect(json['time']).to eq('2025-02-07T13:50:00Z')
       # initial: on duty RED (+effect) then UNDEFINED
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
       # Special next sync at 15:00 +small jitter to fetch TOMORROW value
@@ -130,8 +130,8 @@ RSpec.describe '/' do
       expect(json['time']).to eq('2025-02-07T14:00:00Z')
       # initial: on duty RED (+effect) then UNDEFINED
       expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[RED], "FX"=>"breathingRingHalf"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
-      # Next sync (quicker) in 30m+jitter (to get the late color)
-      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-07T14:[345]\d:\d\dZ/})
+      # Next sync (quicker) in 15m+jitter (to get the late color)
+      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2025-02-07T14:[12]\d:\d\dZ/})
       # No more data after 1am end of day (refresh should bring it before that)
       expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2025-02-08T00:00:00Z"})
     end
@@ -226,7 +226,7 @@ RSpec.describe '/' do
     end
 
     it "provides a custom syncAPI at 16h before announce" do
-      travel_to Time.new(2026, 1, 9, 15, 30, 0, "+01:00") # 15:30, before 16h announce
+      travel_to Time.new(2026, 1, 9, 15, 50, 0, "+01:00") # 15:50, before 16h announce (closer than fast sync)
       get '/', mode: 'zen_flex', today: RED, tomorrow: UNKNOWN
       expect(last_response).to be_ok
       # Special next sync at ~16:00 to fetch TOMORROW value
