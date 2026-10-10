@@ -146,6 +146,7 @@ input[type=submit]:disabled {
 }
 .cancel {
   font-weight: normal;
+  width: fit-content;
 }
 .cancel:hover {
   background-color: #6c7d83;
@@ -361,13 +362,13 @@ input[type=checkbox].daytime-toggle-input {
 input[type=text] {
   margin: 10px 0;
   width: 100%;
-  padding: 5px 15px;
+  padding: 5px 10px;
   border: 0;
   font-size: medium;
   font-family: system-ui, sans-serif;
   background-color: #556970;
   background-color: var(--color-surface-mixed-300);
-  border-radius: 20px;
+  border-radius: 8px;
   border-bottom: 2px solid #839196;
   border-bottom-color: var(--color-surface-mixed-500);
   color: white;
@@ -382,7 +383,7 @@ input[type=text]:focus {
 
 /** Flash messages */
 .flash {
-  margin: 0 15px 15px;
+  margin: 0 15px;
   padding: 10px 12px;
   border-left: 3px solid;
   border-radius: 6px;

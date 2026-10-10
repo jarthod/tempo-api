@@ -27,7 +27,7 @@ COLORS = [
   [ 30, 255, 180],                # Turquoise
   [220, 172, 120, 255,   0,   0], # White/Red
   [220, 172, 120,  24, 204, 144], # White/Turquoise
-  [255,  90,   0],                # Orange
+  [255,  70,   0],                # Orange
 ]
 COLOR_NAMES = %w(Inconnu Bleu Blanc Rouge Vert Eco Bonus/HP Bonus/HC Orange)
 UNKNOWN, BLUE, WHITE, RED, GREEN, ECO, BONIF, BONUS, ORANGE = 0, 1, 2, 3, 4, 5, 6, 7, 8
