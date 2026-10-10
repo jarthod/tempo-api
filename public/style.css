@@ -241,7 +241,81 @@ form {
   border: 0;
 }
 .hp-hc-settings > legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   font-weight: bold;
+}
+.hp-hc-settings > legend .hc-history-legend {
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0 0 0 12px;
+  font-weight: normal;
+}
+.hc-history {
+  margin: 10px 0 16px;
+}
+.hc-history-track {
+  position: relative;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: #ff9b35;
+}
+.hc-history-segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.hc-history-segment.hp {
+  background-color: #ff9b35;
+}
+.hc-history-segment.hc {
+  background-color: #167de8;
+}
+.hc-history-segment.error {
+  background-color: #ff476f;
+  background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgb(0 0 0 / 35%) 5px 9px);
+}
+.hc-history-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  color: var(--color-surface-600);
+  font-size: small;
+  font-variant-numeric: tabular-nums;
+}
+.hc-history-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 8px;
+  font-size: small;
+}
+.hc-history-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.hc-history-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.hc-history-swatch.hc {
+  background-color: #167de8;
+}
+.hc-history-swatch.hp {
+  background-color: #ff9b35;
+}
+.hc-history-status {
+  margin: 8px 0 0;
+  color: #ff7894;
+  font-size: small;
+}
+.hc-history-status[hidden] {
+  display: none;
 }
 .time-range {
   min-width: 0;
