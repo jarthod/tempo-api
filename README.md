@@ -13,7 +13,7 @@ Tests
 bundle exec rspec
 ```
 
-Deploy
+Deploy (Hatchbox deploys automatically on push to master)
 ```sh
-git push dokku master
+git push origin master
 ```

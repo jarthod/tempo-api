@@ -11,7 +11,7 @@ namespace :db do
 
   task :pull do
     system("cp data/db.sqlite3 data/db.save.sqlite3")
-    system("scp root@dokku.rootbox.fr:/mnt/dokku_data/tempo-api/data/db.sqlite3 data/db.sqlite3")
+    system("scp deploy@hatch.rootbox.fr:/data/tempo-api/db.sqlite3 data/db.sqlite3")
   end
 
   task :push do
