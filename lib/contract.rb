@@ -11,7 +11,7 @@ module Contract
   CONFIG = {
     'tempo' => {
       name: 'Tempo',
-      description: 'Tarif modulé selon la couleur du jour (Bleu, Blanc, Rouge) et les heures pleines ou creuses.',
+      description: 'Contrat EDF aux tarifs réglementés - Tarif modulé selon la couleur du jour (Bleu, Blanc, Rouge) avec heures creuses entre 22:00 et 06:00.',
       colors: [BLUE, WHITE, RED],
       day_for: ->(time) { (time.in_time_zone('Europe/Paris') - TEMPO_HP_START.hours).to_date },
       fetch: ->(time, date) {
@@ -22,14 +22,14 @@ module Contract
     },
     'ejp' => {
       name: 'EJP',
-      description: 'Tarif réduit la plupart des jours, plus élevé pendant les jours EJP (Effacement Jour Pointe).',
+      description: 'Ancien contrat EDF aux tarifs réglementés - Tarif réduit la plupart des jours, plus élevé pendant les 22 jours EJP (Effacement Jour Pointe).',
       colors: [GREEN, RED],
       day_for: ->(time) { time.in_time_zone('Europe/London').to_date },
       fetch: ->(time, date) { EDF::EJP_OFF_MONTH === date.month ? GREEN : EDF.ejp_color_for(time) }
     },
     'zen_flex' => {
       name: 'Zen Flex',
-      description: 'Contrat privé EDF dont le nom complet est Zen Week-End - Option Flex. Tarif réduit la plupart des jours, plus élevé pendant les jours sobriété. Heures creuses durant 17h.',
+      description: 'Contrat EDF aux tarifs non réglementés également appelé Zen Week-End Option Flex - Tarif réduit la plupart des jours, avec 22 jours sobriétés plus chers. 17 heures creuses par jour.',
       colors: [ECO, RED, BONIF, BONUS],
       day_for: ->(time) { time.in_time_zone('Europe/Paris').to_date },
       fetch: ->(time, date) { EDF.zen_flex_color_for(date) }
@@ -37,7 +37,7 @@ module Contract
     # No API: off-peak hours are specific to each customer, configured in device settings
     'hphc' => {
       name: 'HP / HC',
-      description: "Deux tarifs selon l'horaire ; les heures creuses sont moins chères.",
+      description: "Contrat EDF aux tarifs réglementés - Tarif modulé selon l'heure de la journée (Heures Pleines / Heures Creuses).",
       colors: [ECO, ORANGE]
     }
   }.freeze
