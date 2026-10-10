@@ -291,7 +291,7 @@ http_interactions:
   recorded_at: Tue, 11 Feb 2025 15:00:00 GMT
 - request:
     method: get
-    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-02-11
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-02-11&urlPlaasmaCommerce=https://api-commerce.edf.fr
     body:
       encoding: US-ASCII
       string: ''
@@ -323,7 +323,7 @@ http_interactions:
   recorded_at: Tue, 11 Feb 2025 15:00:00 GMT
 - request:
     method: get
-    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-02-12
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-02-12&urlPlaasmaCommerce=https://api-commerce.edf.fr
     body:
       encoding: US-ASCII
       string: ''

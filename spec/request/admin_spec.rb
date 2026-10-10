@@ -26,28 +26,15 @@ RSpec.describe '/admin', :request do
       expect(page).to have_content('ZEN FLEX: ● Eco / ● Eco')
     end
 
-    it "display devices and can change mode via select" do
-      d = Device.create!(id: 255)
+    it "display devices with their mode, settings and a link to their config page" do
+      Device.create!(id: 255)
+      Device.create!(id: 95235612490712, mode: 'hphc', hc_ranges: [["22:00", "06:00"], ["12:00", "14:00"]])
       VCR.use_cassette("/admin") do
         visit '/admin'
-        expect(page).to have_content('0000000000FF')
-        expect(page).to have_select('mode', selected: 'TEMPO')
-        expect {
-          select 'EJP', from: 'mode'
-          find('form[action*="/devices/"] button[type=submit]', visible: :all).click
-        }.to change { d.reload.mode }.from('tempo').to('ejp')
-        expect(page).to have_select('mode', selected: 'EJP')
-        expect {
-          select 'ZEN FLEX', from: 'mode'
-          find('form[action*="/devices/"] button[type=submit]', visible: :all).click
-        }.to change { d.reload.mode }.from('ejp').to('zen_flex')
-        expect(page).to have_select('mode', selected: 'ZEN FLEX')
-        expect {
-          select 'TEMPO', from: 'mode'
-          find('form[action*="/devices/"] button[type=submit]', visible: :all).click
-        }.to change { d.reload.mode }.from('zen_flex').to('tempo')
-        expect(page).to have_select('mode', selected: 'TEMPO')
       end
+      expect(page).to have_content('0000000000FF TEMPO')
+      expect(page).to have_content('569DC4DA3BD8 HP / HC (HC 22:00–06:00, 12:00–14:00)')
+      expect(page).to have_link('569DC4DA3BD8', href: '/id/569dc4da3bd8')
     end
 
     it "allows setting and clearing manual overrides inline" do

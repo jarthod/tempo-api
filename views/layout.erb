@@ -1,35 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang='fr'>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TempOrb Admin</title>
-  <link rel="stylesheet" href="https://fonts.xz.style/serve/inter.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@exampledev/new.css@1.1.2/new.min.css">
-  <style>
-    body {
-      max-width: 50em;
-      font-variant-numeric: tabular-nums;
-    }
-    footer { color: #888; margin-top: 2em; }
-  </style>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title><%= h(@title || "Temp'Orb - Configuration en ligne") %></title>
+  <% if @noindex %>
+    <meta name='robots' content='noindex, nofollow'>
+  <% else %>
+    <meta name='description' content="Page de configuration en ligne pour Temp'Orb. Changement de contrat et paramétrages avancés.">
+    <link rel='canonical' href='https://config.temporb.fr/'>
+  <% end %>
+  <link rel='icon' href='/icon.svg'>
+  <link rel='stylesheet' href='/style.css'>
 </head>
-<body>
-  <header><h1><%= $icon ||= File.read('public/icon.svg') %> TempOrb Admin</h1></header>
-  <main><%= yield %></main>
-  <footer>
-    <div style="float: right"><%= @now %></div>
-    TEMPO: <%= color_display(Contract.color_for('tempo', @now)) %> / <%= color_display(Contract.color_for('tempo', @now.tomorrow)) %> (auto + caching)<br>
-    <% EDF::TEMPO_APIS.each_with_index do |api, i| %>
-      ├ API <%= i+1 %>: <%= color_display(EDF.tempo_color_for(@tempo_day, api: api)) %> / <%= color_display(EDF.tempo_color_for(@tempo_day.tomorrow, api: api)) %> (<%= api %>) <br>
-    <% end %>
-    └ Manuel: <%= manual_select('tempo', 'today') %> / <%= manual_select('tempo', 'tomorrow') %><br>
-    EJP: <%= color_display(Contract.color_for('ejp', @now)) %> / <%= color_display(Contract.color_for('ejp', @now.tomorrow)) %> (period + caching)<br>
-    ├ API 1: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %> (api-commerce.edf.fr) <br>
-    └ Manuel: <%= manual_select('ejp', 'today') %> / <%= manual_select('ejp', 'tomorrow') %><br>
-    ZEN FLEX: <%= color_display(Contract.color_for('zen_flex', @now)) %> / <%= color_display(Contract.color_for('zen_flex', @now.tomorrow)) %> (caching)<br>
-    ├ API: <%= color_display(EDF.zen_flex_color_for(@now.to_date)) %> / <%= color_display(EDF.zen_flex_color_for(@now.tomorrow.to_date)) %> (particulier.edf.fr) <br>
-    └ Manuel: <%= manual_select('zen_flex', 'today') %> / <%= manual_select('zen_flex', 'tomorrow') %><br>
-  </footer>
+<body class='<%= @body_class %>'>
+  <div class='wrapper'>
+    <header>
+      <h1 class='header'><%= @heading || "Configuration de votre Temp'Orb" %></h1>
+      <% if @introduction %>
+        <p class='introduction'><%= @introduction %></p>
+      <% end %>
+    </header>
+
+    <main>
+      <% session.delete('flash')&.each do |type, message| %>
+        <p class='flash <%= type %>' role='status'><%= h(message) %></p>
+      <% end %>
+      <%= yield %>
+    </main>
+
+    <footer>
+      <b>Fait avec le ❤️ en <span class='fr-flag-part blue'></span><span class='fr-flag-part white'></span><span class='fr-flag-part red'></span></b><br>
+      Thomas Borie - 2025-2026
+    </footer>
+  </div>
 </body>
 </html>

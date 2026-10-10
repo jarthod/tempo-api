@@ -3,7 +3,7 @@ require_relative "contract"
 require "solareventcalculator"
 
 module TempOrb
-  def self.actions_for now, mode:, today: nil, tomorrow: nil
+  def self.actions_for now, mode:, settings: nil, today: nil, tomorrow: nil
     # reduced sync interval to get the color if announced earlier
     sync_at = now + SYNC_INTERVAL + rand(SYNC_INTERVAL/2)
     fast_sync_at = now + FAST_SYNC_INTERVAL + rand(FAST_SYNC_INTERVAL/2)
@@ -103,6 +103,28 @@ module TempOrb
 
       # Post-process: apply night dimming based on sunset/sunrise
       actions = apply_dimming(actions, now)
+    when 'hphc'
+      # No notion of day: top = current hour, bottom = next hour (HC turquoise, HP orange)
+      now = now.in_time_zone('Europe/Paris')
+      hc_periods = hc_periods_for(now, settings&.dig('hc_ranges') || [])
+      if hc_periods.empty?
+        logger.info "[#{now}] HP/HC not configured"
+        return [updateLEDs(UNKNOWN, UNKNOWN), syncAPI(sync_at), error_noData(now)]
+      end
+      end_of_data = now + 2.days # schedule is static, no need to go further
+      color_at = ->(time) { hc_periods.any? { _1.cover?(time) } ? ECO : ORANGE }
+      changes = hc_periods.flat_map { [_1.begin, _1.end] }.uniq
+        .select { color_at.(_1) != color_at.(_1 - 1.second) }
+      # bottom ring changes 1h before the top one
+      updates = changes.flat_map { [_1, _1 - 1.hour] }.uniq.sort.select { _1 > now && _1 < end_of_data }
+      logger.info "[#{now}] HP/HC: #{COLOR_NAMES[color_at.(now)]}, next changes: #{changes.sort.select { _1 > now }.first(4).join(', ')}"
+
+      actions = [now, *updates].map do |time|
+        updateLEDs(color_at.(time), color_at.(time + 1.hour), timing: (time unless time == now))
+      end
+      actions << syncAPI(sync_at)
+      actions << error_noData(end_of_data)
+      actions = apply_dimming(actions, now)
     else
       raise ArgumentError.new("Invalid mode: #{mode}")
     end
@@ -110,6 +132,18 @@ module TempOrb
   end
 
   private
+
+  # Off-peak periods around now as time ranges, from [["22:00", "06:00"], ...] settings
+  def self.hc_periods_for now, ranges
+    (-1..2).flat_map do |offset|
+      day = now.beginning_of_day + offset.days
+      ranges.map do |range|
+        start_time, end_time = range.map { |hm| h, m = hm.split(':').map(&:to_i); day.change(hour: h, min: m) }
+        end_time += 1.day if end_time <= start_time # crosses midnight
+        start_time...end_time
+      end
+    end
+  end
 
   def self.updateLEDs today, tomorrow, timing: nil, fx: "none", brightness: 1
     top = {**color_codes(today, brightness:), FX: fx}

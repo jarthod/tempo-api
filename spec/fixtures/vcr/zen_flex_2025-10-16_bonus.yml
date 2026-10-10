@@ -2,7 +2,7 @@
 http_interactions:
 - request:
     method: get
-    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-10-16
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2025-10-16&urlPlaasmaCommerce=https://api-commerce.edf.fr
     body:
       encoding: US-ASCII
       string: ''

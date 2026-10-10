@@ -2,8 +2,8 @@ require 'app_helper'
 
 RSpec.describe Contract do
   describe "MODES" do
-    it "includes tempo, ejp, and zen_flex" do
-      expect(Contract::MODES).to eq(%w[tempo ejp zen_flex])
+    it "includes tempo, ejp, zen_flex and hphc" do
+      expect(Contract::MODES).to eq(%w[tempo ejp zen_flex hphc])
     end
   end
 

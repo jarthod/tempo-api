@@ -1,0 +1,127 @@
+<%
+  @introduction = "Page de configuration et paramétrage du contrat pour votre Temp'Orb <b>#{h(@device_id)}</b>."
+  night, day = @device.hc_ranges
+%>
+<form action='/id/<%= h(@device_id) %>' method='post'>
+  <input type='hidden' name='_method' value='patch'>
+  <% if @device.errors.any? %>
+    <p class='flash alert' role='alert'><strong>Erreur :</strong> <%= h(@device.errors.map(&:message).uniq.join(' ')) %></p>
+  <% end %>
+
+  <input type='hidden' name='mode' id='contract' value='<%= h(@device.mode) %>'>
+  <fieldset class='contract-fieldset'>
+    <legend>Sélection du contrat</legend>
+    <div class='contract-options'>
+      <% Contract::MODES.each do |mode| %>
+        <button type='button' class='contract-option' aria-pressed='<%= @device.mode == mode %>' aria-controls='contract-description'
+          data-contract='<%= mode %>' data-name='<%= h(Contract.name_for(mode)) %>' data-description='<%= h(Contract.description_for(mode)) %>'><%= h(Contract.name_for(mode)) %></button>
+      <% end %>
+    </div>
+    <div class='contract-description-panel' id='contract-description' aria-live='polite' <%= 'hidden' unless Contract::MODES.include?(@device.mode) %>>
+      <strong class='contract-description-title'><%= h(Contract.name_for(@device.mode)) %></strong>
+      <p class='contract-description-text'><%= h(Contract.description_for(@device.mode)) %></p>
+    </div>
+  </fieldset>
+
+  <fieldset class='hp-hc-settings' id='hp-hc-settings' <%= 'hidden disabled' unless @device.mode == 'hphc' %>>
+    <legend>Périodes d'heures creuses</legend>
+    <fieldset class='time-range'>
+      <legend>Heures creuses nocturnes</legend>
+      <div class='time-range-inputs'>
+        <div class='time-input'>
+          <label for='night-start'>Début</label>
+          <input class='time-control' type='time' id='night-start' name='hc_night_start' value='<%= h(night&.first) %>' step='1800' required>
+        </div>
+        <div class='time-input'>
+          <label for='night-end'>Fin</label>
+          <input class='time-control' type='time' id='night-end' name='hc_night_end' value='<%= h(night&.last) %>' step='1800' required>
+        </div>
+      </div>
+    </fieldset>
+    <label class='daytime-toggle' for='day-enabled'>
+      <input class='daytime-toggle-input' type='checkbox' id='day-enabled' name='hc_day_enabled' value='1' aria-controls='day-fields' <%= 'checked' if day %>>
+      Mon contrat comporte également des heures creuses en journée
+    </label>
+    <fieldset class='time-range' id='day-fields' <%= 'hidden disabled' unless day %>>
+      <legend>Heures creuses diurnes</legend>
+      <div class='time-range-inputs'>
+        <div class='time-input'>
+          <label for='day-start'>Début</label>
+          <input class='time-control' type='time' id='day-start' name='hc_day_start' value='<%= h(day&.first) %>' step='1800' required>
+        </div>
+        <div class='time-input'>
+          <label for='day-end'>Fin</label>
+          <input class='time-control' type='time' id='day-end' name='hc_day_end' value='<%= h(day&.last) %>' step='1800' required>
+        </div>
+      </div>
+    </fieldset>
+  </fieldset>
+
+  <input type='submit' value='Enregistrer les paramètres'>
+  <a class='cancel' href='/id'>Configurer un autre Temp'Orb</a>
+</form>
+
+<link rel='stylesheet' href='https://ka-f.webawesome.com/webawesome@3.14.0/styles/themes/default.css'>
+<script type='module'>
+  // Chromium shows AM/PM time inputs depending on browser language: use Web Awesome 24h picker there,
+  // other browsers (and failures to load) keep the native time inputs
+  if (navigator.userAgentData?.brands.some(({ brand }) => brand === 'Chromium')) {
+    try {
+      const cdn = 'https://ka-f.webawesome.com/webawesome@3.14.0';
+      await Promise.all([import(`${cdn}/components/time-input/time-input.js`), import(`${cdn}/translations/fr.js`)]);
+      await customElements.whenDefined('wa-time-input');
+      document.querySelectorAll('input.time-control').forEach((nativeInput) => {
+        const label = nativeInput.parentElement.querySelector('label');
+        const picker = document.createElement('wa-time-input');
+        ['id', 'name', 'step'].forEach((attribute) => picker.setAttribute(attribute, nativeInput.getAttribute(attribute)));
+        picker.setAttribute('lang', 'fr');
+        picker.setAttribute('hour-format', '24');
+        picker.setAttribute('label', label.textContent.trim());
+        picker.className = 'wa-time-picker time-control wa-dark'; // dark dropdown
+        picker.required = nativeInput.required;
+        picker.value = nativeInput.value;
+        label.remove();
+        nativeInput.replaceWith(picker);
+      });
+      window.updateSubmitState();
+    } catch (error) {
+      console.error('Web Awesome time inputs could not be loaded, using native time inputs.', error);
+    }
+  }
+</script>
+<script>
+  const contractInput = document.querySelector('#contract');
+  const descriptionPanel = document.querySelector('#contract-description');
+  const hpHcSettings = document.querySelector('#hp-hc-settings');
+  const daytimeToggle = document.querySelector('#day-enabled');
+  const daytimeFields = document.querySelector('#day-fields');
+  const submitButton = document.querySelector('input[type="submit"]');
+
+  // Disabled fieldsets are neither submitted nor validated, so `required` only applies to visible inputs
+  // (.time-control is either the native input or its Web Awesome replacement)
+  window.updateSubmitState = function updateSubmitState() {
+    const visibleTimes = [...document.querySelectorAll('.time-control')].filter((input) => !input.closest('fieldset:disabled'));
+    submitButton.disabled = !contractInput.value || visibleTimes.some((input) => input.value === '' || !input.checkValidity());
+  }
+
+  document.querySelectorAll('.contract-option').forEach((option, _, options) => {
+    option.addEventListener('click', () => {
+      options.forEach((item) => item.setAttribute('aria-pressed', String(item === option)));
+      contractInput.value = option.dataset.contract;
+      descriptionPanel.querySelector('.contract-description-title').textContent = option.dataset.name;
+      descriptionPanel.querySelector('.contract-description-text').textContent = option.dataset.description;
+      descriptionPanel.hidden = false;
+      hpHcSettings.hidden = hpHcSettings.disabled = option.dataset.contract !== 'hphc';
+      updateSubmitState();
+    });
+  });
+
+  daytimeToggle.addEventListener('change', () => {
+    daytimeFields.hidden = daytimeFields.disabled = !daytimeToggle.checked;
+    updateSubmitState();
+  });
+
+  // delegated so it also catches the Web Awesome pickers swapped in later
+  ['input', 'change'].forEach((type) => document.querySelector('form').addEventListener(type, updateSubmitState));
+  updateSubmitState();
+</script>

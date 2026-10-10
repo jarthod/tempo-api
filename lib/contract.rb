@@ -1,7 +1,7 @@
 require_relative "edf"
 
 module Contract
-  MODES = %w(tempo ejp zen_flex).freeze
+  MODES = %w(tempo ejp zen_flex hphc).freeze
 
   # Each day_for forces its own timezone rather than trusting the caller to have
   # already converted, so it gives the right answer no matter what zone `time` is in.
@@ -11,6 +11,7 @@ module Contract
   CONFIG = {
     'tempo' => {
       name: 'Tempo',
+      description: 'Tarif modulé selon la couleur du jour (Bleu, Blanc, Rouge) et les heures pleines ou creuses.',
       colors: [BLUE, WHITE, RED],
       day_for: ->(time) { (time.in_time_zone('Europe/Paris') - TEMPO_HP_START.hours).to_date },
       fetch: ->(time, date) {
@@ -21,15 +22,23 @@ module Contract
     },
     'ejp' => {
       name: 'EJP',
+      description: 'Tarif réduit la plupart des jours, plus élevé pendant les jours EJP (Effacement Jour Pointe).',
       colors: [GREEN, RED],
       day_for: ->(time) { time.in_time_zone('Europe/London').to_date },
       fetch: ->(time, date) { EDF::EJP_OFF_MONTH === date.month ? GREEN : EDF.ejp_color_for(time) }
     },
     'zen_flex' => {
       name: 'Zen Flex',
+      description: 'Contrat privé EDF dont le nom complet est Zen Week-End - Option Flex. Tarif réduit la plupart des jours, plus élevé pendant les jours sobriété. Heures creuses durant 17h.',
       colors: [ECO, RED, BONIF, BONUS],
       day_for: ->(time) { time.in_time_zone('Europe/Paris').to_date },
       fetch: ->(time, date) { EDF.zen_flex_color_for(date) }
+    },
+    # No API: off-peak hours are specific to each customer, configured in device settings
+    'hphc' => {
+      name: 'HP / HC',
+      description: "Deux tarifs selon l'horaire ; les heures creuses sont moins chères.",
+      colors: [ECO, ORANGE]
     }
   }.freeze
 
@@ -37,6 +46,10 @@ module Contract
 
   def self.name_for(mode)
     CONFIG.dig(mode.to_s, :name) || mode.to_s.upcase
+  end
+
+  def self.description_for(mode)
+    CONFIG.dig(mode.to_s, :description)
   end
 
   def self.colors_for(mode)
@@ -62,7 +75,7 @@ module Contract
   # overrides also write into), else fetch fresh and cache it (unless UNKNOWN).
   def self.color_for(mode, time)
     config = CONFIG[mode.to_s]
-    return UNKNOWN unless config
+    return UNKNOWN unless config&.dig(:fetch)
 
     date = config[:day_for].call(time)
     key = cache_key(mode, date)

@@ -2,7 +2,7 @@
 http_interactions:
 - request:
     method: get
-    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-08
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-08&urlPlaasmaCommerce=https://api-commerce.edf.fr
     body:
       encoding: US-ASCII
       string: ''
@@ -73,7 +73,7 @@ http_interactions:
   recorded_at: Tue, 10 Mar 2026 14:02:24 GMT
 - request:
     method: get
-    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-09
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-09&urlPlaasmaCommerce=https://api-commerce.edf.fr
     body:
       encoding: US-ASCII
       string: ''
@@ -144,7 +144,7 @@ http_interactions:
   recorded_at: Tue, 10 Mar 2026 14:02:24 GMT
 - request:
     method: get
-    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-10
+    uri: https://particulier.edf.fr/services/rest/opm/getOPMStatut?dateRelevant=2026-01-10&urlPlaasmaCommerce=https://api-commerce.edf.fr
     body:
       encoding: US-ASCII
       string: ''

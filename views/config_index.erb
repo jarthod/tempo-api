@@ -1,0 +1,10 @@
+<% @introduction = "Page de configuration et paramétrage du contrat pour votre Temp'Orb." %>
+<form action='/id' method='get'>
+  <% if @error %>
+    <p class='flash alert' role='alert'><%= h(@error) %></p>
+  <% end %>
+  <label for='device-id'>Veuillez entrer ci-dessous l'identifiant du Temp'Orb à configurer.<br>
+  Cet identifiant se trouve sur une étiquette sous le boîtier.</label>
+  <input type='text' id='device-id' name='id' value='<%= h(@device_id) %>' minlength='12' maxlength='12' placeholder='123456789abc' pattern='[0-9a-fA-F]{12}' spellcheck='false' autocapitalize='off' required autofocus>
+  <input type='submit' value='Valider'>
+</form>

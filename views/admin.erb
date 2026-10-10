@@ -1,27 +1,69 @@
+<%
+  @title = "Temp'Orb Admin"
+  @heading = "#{$icon ||= File.read('public/icon.svg')} Temp'Orb Admin"
+  @body_class = 'admin'
+%>
+<section class='panel'>
+  <div class='technical'><%= @now %></div>
+  <div class='statuses'>
+    <% tempo = [Contract.color_for('tempo', @now), Contract.color_for('tempo', @now.tomorrow)] %>
+    <div class='status'>
+      <%= orb_svg(*tempo) %>
+      <div class='status-details'>
+        <strong>TEMPO</strong>: <%= color_display(tempo[0]) %> / <%= color_display(tempo[1]) %> <span class='technical'>(auto + caching)</span><br>
+        <% EDF::TEMPO_APIS.each_with_index do |api, i| %>
+          ├ API <%= i+1 %>: <%= color_display(EDF.tempo_color_for(@tempo_day, api: api)) %> / <%= color_display(EDF.tempo_color_for(@tempo_day.tomorrow, api: api)) %> <span class='technical'>(<%= api %>)</span><br>
+        <% end %>
+        └ Manuel: <%= manual_select('tempo', 'today') %> / <%= manual_select('tempo', 'tomorrow') %>
+      </div>
+    </div>
+    <% ejp = [Contract.color_for('ejp', @now), Contract.color_for('ejp', @now.tomorrow)] %>
+    <div class='status'>
+      <%= orb_svg(*ejp) %>
+      <div class='status-details'>
+        <strong>EJP</strong>: <%= color_display(ejp[0]) %> / <%= color_display(ejp[1]) %> <span class='technical'>(period + caching)</span><br>
+        ├ API 1: <%= color_display(EDF.ejp_color_for(@now)) %> / <%= color_display(EDF.ejp_color_for(@now.tomorrow)) %> <span class='technical'>(api-commerce.edf.fr)</span><br>
+        └ Manuel: <%= manual_select('ejp', 'today') %> / <%= manual_select('ejp', 'tomorrow') %>
+      </div>
+    </div>
+    <% zen_flex = [Contract.color_for('zen_flex', @now), Contract.color_for('zen_flex', @now.tomorrow)] %>
+    <div class='status'>
+      <%= orb_svg(*zen_flex) %>
+      <div class='status-details'>
+        <strong>ZEN FLEX</strong>: <%= color_display(zen_flex[0]) %> / <%= color_display(zen_flex[1]) %> <span class='technical'>(caching)</span><br>
+        ├ API: <%= color_display(EDF.zen_flex_color_for(@now.to_date)) %> / <%= color_display(EDF.zen_flex_color_for(@now.tomorrow.to_date)) %> <span class='technical'>(particulier.edf.fr)</span><br>
+        └ Manuel: <%= manual_select('zen_flex', 'today') %> / <%= manual_select('zen_flex', 'tomorrow') %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class='table-scroll'>
 <table>
-  <tr><th>Device ID</th><th>Mode</th><th>First Poll ▾</th><th>Last Poll / Update</th></tr>
+  <tr><th>Device ID</th><th>Mode (settings)</th><th>First Poll ▾</th><th>Last Poll / Update</th></tr>
   <% Device.order(created_at: :desc).each do |device| %>
+    <% other_settings = device.settings&.except('hc_ranges') %>
     <tr>
-      <td title="<%= device.id %>"><%= "%012X" % device.id %></td>
+      <td title="<%= device.id %>"><a href="/id/<%= "%012x" % device.id %>"><%= "%012X" % device.id %></a></td>
       <td>
-        <form action="/devices/<%= device.id %>/change_mode" method="post" style="display:inline">
-          <select name="mode" onchange="this.form.submit()">
-            <% Contract::MODES.each do |m| %>
-              <option value="<%= m %>" <%= 'selected' if device.mode == m %>><%= Contract.name_for(m).upcase %></option>
-            <% end %>
-          </select>
-          <button type="submit" style="display:none">Apply</button>
-        </form>
+        <%= h(Contract.name_for(device.mode).upcase) %>
+        <% if device.hc_ranges.any? %>
+          <span class='technical'>(HC <%= h(device.hc_ranges.map { _1.join('–') }.join(', ')) %>)</span>
+        <% end %>
+        <% if other_settings.present? %>
+          <span class='technical'>(<%= h(other_settings.to_json) %>)</span>
+        <% end %>
       </td>
-      <td><%= device.created_at.in_time_zone('Europe/Paris') %></td>
-      <td>
+      <td class='time'><%= device.created_at.in_time_zone('Europe/Paris').strftime('%Y-%m-%d %H:%M:%S') %></td>
+      <td class='time'>
         <% if device.updated_at < 1.day.ago %>
-          <span style='color: rgb(<%= COLORS[RED].join(', ') %>);'> ×</span>
+          <span style='color: rgb(<%= COLORS[RED].join(', ') %>);'>×</span>
         <% else %>
           <span style='color: rgb(<%= COLORS[GREEN].join(', ') %>);'>✓</span>
         <% end %>
-        <%= device.updated_at.in_time_zone('Europe/Paris') %>
+        <%= device.updated_at.in_time_zone('Europe/Paris').strftime('%Y-%m-%d %H:%M:%S') %>
       </td>
     </tr>
   <% end %>
 </table>
+</div>

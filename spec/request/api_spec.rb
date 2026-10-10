@@ -4,6 +4,13 @@ RSpec.describe '/' do
   let(:json) { JSON.parse(last_response.body) }
   DIM_COLORS = COLORS.map { |i| i.map { _1 / 2 } }
 
+  it "serves the config page instead of the API on the config hostname" do
+    get '/', {}, 'HTTP_HOST' => 'config.temporb.fr'
+    expect(last_response).to be_ok
+    expect(last_response.content_type).to include('text/html')
+    expect(last_response.body).to include("l'identifiant du Temp'Orb à configurer")
+  end
+
   context "in TEMPO mode" do
     before do
       travel_to Time.new(2025, 2, 3, 6, 0, 0, "+01:00")
@@ -234,7 +241,64 @@ RSpec.describe '/' do
     end
   end
 
+  context "in HP/HC mode" do
+    before do
+      travel_to Time.new(2026, 1, 9, 10, 0, 0, "+01:00") # 10am HP
+    end
+
+    it "returns current and next hour colors from the device off-peak ranges" do
+      Device.create!(id: 124, mode: 'hphc', hc_ranges: [["22:00", "06:00"], ["12:30", "14:00"]])
+      get '/', id: '124'
+      expect(last_response).to be_ok
+      expect(json['mode']).to eq('hphc')
+      leds = ->(timing, top, bottom, colors = COLORS) {
+        {"action"=>"updateLEDs", "timing"=>timing, "topLEDs"=>{"RGB"=>colors[top], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>colors[bottom], "FX"=>"none"}}
+      }
+      # initial: HP now and in 1h
+      expect(json['actions']).to include(leds.("initial", ORANGE, ORANGE)).once
+      # at 11:30 → HC in 1h
+      expect(json['actions']).to include(leds.("2026-01-09T10:30:00Z", ORANGE, ECO)).once
+      # at 12:30 → HC now and in 1h
+      expect(json['actions']).to include(leds.("2026-01-09T11:30:00Z", ECO, ECO)).once
+      # at 13:00 → HP in 1h
+      expect(json['actions']).to include(leds.("2026-01-09T12:00:00Z", ECO, ORANGE)).once
+      # at 14:00 → HP now and in 1h
+      expect(json['actions']).to include(leds.("2026-01-09T13:00:00Z", ORANGE, ORANGE)).once
+      # at 21:00 → HC in 1h (night, dim)
+      expect(json['actions']).to include(leds.("2026-01-09T20:00:00Z", ORANGE, ECO, DIM_COLORS)).once
+      # at 22:00 → HC now and in 1h
+      expect(json['actions']).to include(leds.("2026-01-09T21:00:00Z", ECO, ECO, DIM_COLORS)).once
+      # at 05:00 next day → HP in 1h
+      expect(json['actions']).to include(leds.("2026-01-10T04:00:00Z", ECO, ORANGE, DIM_COLORS)).once
+      # at 06:00 next day → HP (still dim before 08:00)
+      expect(json['actions']).to include(leds.("2026-01-10T05:00:00Z", ORANGE, ORANGE, DIM_COLORS)).once
+      # static schedule: regular sync, data valid for 2 days
+      expect(json['actions']).to include({"action"=>"syncAPI", "timing"=>/2026-01-09T10:\d\d:\d\dZ/}).once
+      expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2026-01-11T09:00:00Z"}).once
+    end
+
+    it "handles DST change in off-peak ranges" do
+      travel_to Time.new(2026, 3, 28, 12, 0, 0, "+01:00") # DST switch on the 29th at 2am
+      Device.create!(id: 124, mode: 'hphc', hc_ranges: [["01:00", "07:00"]])
+      get '/', id: '124'
+      expect(json['actions']).to include(hash_including("timing"=>"2026-03-29T00:00:00Z", "topLEDs"=>{"RGB"=>DIM_COLORS[ECO], "FX"=>"none"})).once # 01:00 CET
+      expect(json['actions']).to include(hash_including("timing"=>"2026-03-29T05:00:00Z", "topLEDs"=>{"RGB"=>COLORS[ORANGE], "FX"=>"none"})).once # 07:00 CEST (after sunrise)
+    end
+
+    it "reports missing data when off-peak hours are not configured" do
+      get '/', mode: 'hphc'
+      expect(last_response).to be_ok
+      expect(json['actions']).to include({"action"=>"updateLEDs", "timing"=>"initial", "topLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}, "bottomLEDs"=>{"RGB"=>COLORS[UNKNOWN], "FX"=>"none"}})
+      expect(json['actions']).to include({"action"=>"error_noData", "timing"=>"2026-01-09T09:00:00Z"})
+    end
+  end
+
   context "with a device id" do
+    it "does not send a session cookie to devices" do
+      get '/', id: '569dc4da3bd8', today: RED, tomorrow: UNKNOWN
+      expect(last_response.headers['set-cookie']).to be_nil
+    end
+
     it "creates a device if never seen" do
       expect {
         get '/', id: '123456789012', today: RED, tomorrow: UNKNOWN
