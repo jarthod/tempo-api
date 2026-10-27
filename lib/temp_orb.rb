@@ -72,44 +72,52 @@ module TempOrb
 
       logger.info "[#{now}] Zen Flex HP: #{hp}, Today: #{COLOR_NAMES[today]} (→ #{end_of_today}), Tomorrow: #{COLOR_NAMES[tomorrow]} (→ #{end_of_tomorrow})"
 
-      # Color/FX actions only (no brightness concern)
-      actions = [
-        updateLEDs(today, tomorrow, fx: (hp ? fx_hp : fx_hc)),
-      ]
-      ZENFLEX_HP_RANGES.each do |hp_start, hp_end|
-        start_time = now.change(hour: hp_start)
-        end_time = now.change(hour: hp_end)
-        actions << updateLEDs(today, tomorrow, timing: start_time, fx: fx_hp) if start_time > now
-        actions << updateLEDs(today, tomorrow, timing: end_time, fx: fx_hc) if end_time > now
-      end
-
-      if tomorrow != UNKNOWN
-        fx_hc_tmr = tomorrow == BONUS ? "breathingRingHalf" : "none"
-        fx_hp_tmr = (tomorrow == RED || tomorrow == BONIF) ? "breathingRingHalf" : "none"
-        actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, fx: fx_hc_tmr)
-        ZENFLEX_HP_RANGES.each do |hp_start, hp_end|
-          start_time = end_of_today.change(hour: hp_start)
-          end_time = end_of_today.change(hour: hp_end)
-          actions << updateLEDs(tomorrow, UNKNOWN, timing: start_time, fx: fx_hp_tmr)
-          actions << updateLEDs(tomorrow, UNKNOWN, timing: end_time, fx: fx_hc_tmr)
-        end
-        actions << syncAPI(sync_at)
-        actions << error_noData(end_of_tomorrow)
+      if today == UNKNOWN
+        actions = [
+          updateLEDs(UNKNOWN, UNKNOWN),
+          syncAPI(fast_sync_at),
+          error_noData(now),
+        ]
       else
-        announce_at = now.change(hour: ZENFLEX_ANNOUNCE) + rand(1.minute) if now.hour < ZENFLEX_ANNOUNCE
-        actions << syncAPI([fast_sync_at, announce_at].compact.min)
-        actions << error_noData(end_of_today)
-      end
+        # Color/FX actions only (no brightness concern)
+        actions = [
+          updateLEDs(today, tomorrow, fx: (hp ? fx_hp : fx_hc)),
+        ]
+        ZENFLEX_HP_RANGES.each do |hp_start, hp_end|
+          start_time = now.change(hour: hp_start)
+          end_time = now.change(hour: hp_end)
+          actions << updateLEDs(today, tomorrow, timing: start_time, fx: fx_hp) if start_time > now
+          actions << updateLEDs(today, tomorrow, timing: end_time, fx: fx_hc) if end_time > now
+        end
 
-      # Post-process: apply night dimming based on sunset/sunrise
-      actions = apply_dimming(actions, now)
+        if tomorrow != UNKNOWN
+          fx_hc_tmr = tomorrow == BONUS ? "breathingRingHalf" : "none"
+          fx_hp_tmr = (tomorrow == RED || tomorrow == BONIF) ? "breathingRingHalf" : "none"
+          actions << updateLEDs(tomorrow, UNKNOWN, timing: end_of_today, fx: fx_hc_tmr)
+          ZENFLEX_HP_RANGES.each do |hp_start, hp_end|
+            start_time = end_of_today.change(hour: hp_start)
+            end_time = end_of_today.change(hour: hp_end)
+            actions << updateLEDs(tomorrow, UNKNOWN, timing: start_time, fx: fx_hp_tmr)
+            actions << updateLEDs(tomorrow, UNKNOWN, timing: end_time, fx: fx_hc_tmr)
+          end
+          actions << syncAPI(sync_at)
+          actions << error_noData(end_of_tomorrow)
+        else
+          announce_at = now.change(hour: ZENFLEX_ANNOUNCE) + rand(1.minute) if now.hour < ZENFLEX_ANNOUNCE
+          actions << syncAPI([fast_sync_at, announce_at].compact.min)
+          actions << error_noData(end_of_today)
+        end
+
+        # Post-process: apply night dimming based on sunset/sunrise
+        actions = apply_dimming(actions, now)
+      end
     when 'hphc'
       # No notion of day: top = current hour, bottom = next hour (HC turquoise, HP orange)
       now = now.in_time_zone('Europe/Paris')
       hc_periods = hc_periods_for(now, settings&.dig('hc_ranges') || [])
       if hc_periods.empty?
         logger.info "[#{now}] HP/HC not configured"
-        return [updateLEDs(UNKNOWN, UNKNOWN), syncAPI(sync_at), error_noData(now)]
+        return order_actions([updateLEDs(UNKNOWN, UNKNOWN), syncAPI(fast_sync_at), error_noData(now)])
       end
       end_of_data = now + 2.days # schedule is static, no need to go further
       color_at = ->(time) { hc_periods.any? { _1.cover?(time) } ? ECO : ORANGE }
@@ -128,10 +136,14 @@ module TempOrb
     else
       raise ArgumentError.new("Invalid mode: #{mode}")
     end
-    actions
+    order_actions(actions)
   end
 
   private
+
+  def self.order_actions(actions)
+    actions.sort_by { _1[:timing] == "initial" ? '0' : _1[:timing] }
+  end
 
   # Off-peak periods around now as time ranges, from [["22:00", "06:00"], ...] settings
   def self.hc_periods_for now, ranges
@@ -175,6 +187,8 @@ module TempOrb
     }
 
     led_actions, other_actions = actions.partition { _1[:action] == "updateLEDs" }
+    no_data_action = actions.find { _1[:action] == "error_noData" }
+    no_data_at = Time.parse(no_data_action[:timing]) if no_data_action
 
     # Sunset/sunrise transition markers (today + tomorrow)
     sun_markers = [
@@ -182,7 +196,7 @@ module TempOrb
       now.change(hour: sunset.hour, min: sunset.min),
       (now + 1.day).change(hour: sunrise.hour, min: sunrise.min),
       (now + 1.day).change(hour: sunset.hour, min: sunset.min),
-    ].select { _1 > now }
+    ].select { _1 > now && (!no_data_at || _1 < no_data_at) }
 
     events = led_actions.map { |a| [time_of.(a), :led, a] }
     sun_markers.each { |t| events << [t, :sun, nil] }

@@ -106,11 +106,86 @@ RSpec.describe TempOrb do
       expect(sunrise_action[:topLEDs][:RGB]).to eq(COLORS[RED]) # full brightness
     end
 
+    it "does not insert solar transitions at or after error_noData" do
+      travel_to Time.new(2026, 1, 9, 21, 0, 0, "+01:00")
+      error_no_data = { action: "error_noData", timing: "2026-01-09T23:00:00Z" }
+      result = TempOrb.apply_dimming([red_blue_action, error_no_data], Time.now)
+
+      expect(result.select { _1[:action] == "updateLEDs" }.map { _1[:timing] }).to eq(["initial"])
+      expect(result).to include(error_no_data)
+    end
+
     it "does not touch non-LED actions" do
       travel_to Time.new(2026, 1, 9, 22, 0, 0, "+01:00")
       sync = { action: "syncAPI", timing: "2026-01-09T22:30:00Z" }
       result = TempOrb.apply_dimming([red_blue_action, sync], Time.now)
       expect(result).to include(sync)
+    end
+  end
+
+  describe ".actions_for ordering" do
+    let(:now) { Time.new(2026, 1, 9, 21, 0, 0, "+01:00") }
+
+    it "orders sync and LED actions by time and leaves error_noData last for every contract" do
+      cases = [
+        [now, "tempo", {}, RED, BLUE],
+        [now, "ejp", {}, RED, BLUE],
+        [Time.new(2026, 1, 9, 12, 30, 0, "+01:00"), "zen_flex", {}, RED, BLUE],
+        [Time.new(2026, 1, 9, 20, 30, 0, "+01:00"), "hphc", { hc_ranges: [["22:00", "06:00"]] }, nil, nil],
+        [now, "hphc", {}, nil, nil],
+      ]
+
+      cases.each do |time, mode, settings, today, tomorrow|
+        actions = TempOrb.actions_for(time, mode:, settings:, today:, tomorrow:)
+        scheduled = actions.drop(1)
+
+        expect(actions.first[:timing]).to eq("initial"), mode
+        expect(actions.map { _1[:action] }).to include("syncAPI")
+        expect(scheduled.map { Time.parse(_1[:timing]) }).to eq(scheduled.map { Time.parse(_1[:timing]) }.sort), mode
+      end
+    end
+
+    it "orders error_noData by timing rather than action type" do
+      actions = TempOrb.actions_for(now, mode: "hphc", settings: {})
+      error_index = actions.index { _1[:action] == "error_noData" }
+      sync_index = actions.index { _1[:action] == "syncAPI" }
+
+      expect(error_index).to be < sync_index
+    end
+
+    it "places syncAPI between LED actions when its time falls between their timings" do
+      actions = TempOrb.actions_for(now, mode: "tempo", today: RED, tomorrow: BLUE)
+      sync_index = actions.index { _1[:action] == "syncAPI" }
+
+      expect(actions[sync_index - 1][:action]).to eq("updateLEDs")
+      expect(actions[sync_index + 1][:action]).to eq("updateLEDs")
+      expect(Time.parse(actions[sync_index - 1][:timing])).to be < Time.parse(actions[sync_index][:timing])
+      expect(Time.parse(actions[sync_index][:timing])).to be < Time.parse(actions[sync_index + 1][:timing])
+    end
+
+    it "does not schedule LED actions after midnight when Zen Flex tomorrow is unknown" do
+      time = Time.new(2026, 10, 27, 15, 56, 4, "+01:00")
+      actions = TempOrb.actions_for(time, mode: "zen_flex", today: ECO, tomorrow: UNKNOWN)
+      error_no_data = actions.find { _1[:action] == "error_noData" }
+      scheduled_leds = actions.select { _1[:action] == "updateLEDs" && _1[:timing] != "initial" }
+
+      expect(error_no_data[:timing]).to eq("2026-10-27T23:00:00Z")
+      expect(scheduled_leds).not_to be_empty
+      expect(scheduled_leds.map { Time.parse(_1[:timing]) }.max).to be < Time.parse(error_no_data[:timing])
+      expect(actions.map { _1[:timing] }).not_to include("2026-10-28T06:28:00Z", "2026-10-28T19:00:00Z")
+    end
+
+    it "does not schedule LED actions when today's Zen Flex color is unknown" do
+      time = Time.new(2026, 10, 27, 15, 56, 4, "+01:00")
+      actions = TempOrb.actions_for(time, mode: "zen_flex", today: UNKNOWN, tomorrow: RED)
+      initial = actions.find { _1[:timing] == "initial" }
+      scheduled_leds = actions.select { _1[:action] == "updateLEDs" && _1[:timing] != "initial" }
+      error_no_data = actions.find { _1[:action] == "error_noData" }
+
+      expect(initial[:topLEDs][:RGB]).to eq(COLORS[UNKNOWN])
+      expect(initial[:bottomLEDs][:RGB]).to eq(COLORS[UNKNOWN])
+      expect(scheduled_leds).to be_empty
+      expect(error_no_data[:timing]).to eq("2026-10-27T14:56:04Z")
     end
   end
 end
