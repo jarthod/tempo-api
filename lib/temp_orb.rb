@@ -109,7 +109,7 @@ module TempOrb
       hc_periods = hc_periods_for(now, settings&.dig('hc_ranges') || [])
       if hc_periods.empty?
         logger.info "[#{now}] HP/HC not configured"
-        return [updateLEDs(UNKNOWN, UNKNOWN), syncAPI(sync_at), error_noData(now)]
+        return order_actions([updateLEDs(UNKNOWN, UNKNOWN), syncAPI(fast_sync_at), error_noData(fast_sync_at + 1.minute)])
       end
       end_of_data = now + 2.days # schedule is static, no need to go further
       color_at = ->(time) { hc_periods.any? { _1.cover?(time) } ? ECO : ORANGE }
@@ -128,10 +128,22 @@ module TempOrb
     else
       raise ArgumentError.new("Invalid mode: #{mode}")
     end
-    actions
+    order_actions(actions)
   end
 
   private
+
+  def self.order_actions(actions)
+    actions.each_with_index.sort_by do |(action, index)|
+      timing = action[:timing]
+      [
+        action[:action] == "error_noData" ? 1 : 0,
+        timing == "initial" ? 0 : 1,
+        timing == "initial" ? Time.at(0) : Time.parse(timing),
+        index
+      ]
+    end.map(&:first)
+  end
 
   # Off-peak periods around now as time ranges, from [["22:00", "06:00"], ...] settings
   def self.hc_periods_for now, ranges

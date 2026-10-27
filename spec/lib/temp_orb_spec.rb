@@ -113,4 +113,38 @@ RSpec.describe TempOrb do
       expect(result).to include(sync)
     end
   end
+
+  describe ".actions_for ordering" do
+    let(:now) { Time.new(2026, 1, 9, 21, 0, 0, "+01:00") }
+
+    it "orders sync and LED actions by time and leaves error_noData last for every contract" do
+      cases = [
+        [now, "tempo", {}, RED, BLUE],
+        [now, "ejp", {}, RED, BLUE],
+        [Time.new(2026, 1, 9, 12, 30, 0, "+01:00"), "zen_flex", {}, RED, BLUE],
+        [Time.new(2026, 1, 9, 20, 30, 0, "+01:00"), "hphc", { hc_ranges: [["22:00", "06:00"]] }, nil, nil],
+        [now, "hphc", {}, nil, nil],
+      ]
+
+      cases.each do |time, mode, settings, today, tomorrow|
+        actions = TempOrb.actions_for(time, mode:, settings:, today:, tomorrow:)
+        scheduled = actions[1...-1]
+
+        expect(actions.first[:timing]).to eq("initial"), mode
+        expect(actions.last[:action]).to eq("error_noData"), mode
+        expect(actions.index { _1[:action] == "syncAPI" }).to be < actions.length - 1
+        expect(scheduled.map { Time.parse(_1[:timing]) }).to eq(scheduled.map { Time.parse(_1[:timing]) }.sort), mode
+      end
+    end
+
+    it "places syncAPI between LED actions when its time falls between their timings" do
+      actions = TempOrb.actions_for(now, mode: "tempo", today: RED, tomorrow: BLUE)
+      sync_index = actions.index { _1[:action] == "syncAPI" }
+
+      expect(actions[sync_index - 1][:action]).to eq("updateLEDs")
+      expect(actions[sync_index + 1][:action]).to eq("updateLEDs")
+      expect(Time.parse(actions[sync_index - 1][:timing])).to be < Time.parse(actions[sync_index][:timing])
+      expect(Time.parse(actions[sync_index][:timing])).to be < Time.parse(actions[sync_index + 1][:timing])
+    end
+  end
 end
